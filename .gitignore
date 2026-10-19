@@ -1,0 +1,10 @@
+/devpost/learner-profile.md
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.workcheck/
+*.log
