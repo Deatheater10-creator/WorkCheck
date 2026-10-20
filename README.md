@@ -1,6 +1,6 @@
 # WorkCheck
 
-A local engineering-maths learning tool. **Stages 1–3:** differentiation and context-aware partial-fraction step checking, an editable numbered workspace, local draft saving/restoration, and confirmed reset. Verified working for the current question is available; separate teaching examples and targeted practice are the next stage.
+A local engineering-maths learning tool. **Stages 1-4:** differentiation and context-aware partial-fraction step checking, an editable numbered workspace, local draft saving/restoration, and confirmed reset. Verified working for the current question, concept explanations, a separate worked example and three targeted practice questions are available. Stage 4 passed learner hands-on review.
 
 ## Start on Windows
 
@@ -100,3 +100,14 @@ See devpost/validation.md for actual verification results. Full offline browser 
 
 
 Worked-solution refinement: render actual mathematical equations with a short explanation beside every transformation. Partial fractions include expansion, collection, coefficient comparison, elimination, back-substitution, and the original-to-final equality using the question's actual coefficients. Differentiation shows explicit derivative transformations for the supported sum, product, integer power, chain, sine, cosine, exponential, and logarithm rules. Verify generated transformations symbolically before display; never change the working checker's acceptance rules. Stage 3 was accepted by the learner after review.
+
+
+## Learn and practise
+
+Check a supported question, with or without an attempt. Read the first-error or method feedback, then **Understand the concept** before the worked solutions and the separate **Worked example**. Three distinct practice problems follow, selected for the main method (product, chain, powers, sine/cosine, exponential, logarithm, or restricted partial fractions). Supporting rules used by the example are explained too.
+
+Each practice problem has its own **Reveal answer and worked solution** toggle, initially off. Revealing one does not reveal the others. Answers and complete worked transformations use rendered maths and retain each problem's real-domain restrictions. There is no automatic grading of practice attempts.
+
+All generation and verification run locally in a separate bounded job. Only complete verified sets are displayed: one example plus exactly three distinct practice problems, different from the current question. Small generated candidates fall back to a reverified hand-checked bank; if a full set cannot be verified, an explicit unavailable message preserves your checked answer. Check again to retry. Verified content can be cached in local app memory; failures are not cached. No API keys or external requests are used.
+
+Changing the question, topic, or working (including adding, deleting or reordering lines), rechecking, or confirming New question clears previous practice and reveals. Cancelling New question preserves them. Draft restoration restores your input, not previous answers or reveals.

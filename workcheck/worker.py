@@ -4,6 +4,40 @@ import time
 from .models import CheckResult
 
 
+def _calculate_learning(connection, question, topic):
+    from .practice import LearningPack, build_learning
+    try:
+        connection.send(build_learning(question, topic))
+    except Exception:
+        connection.send(LearningPack(message="Verified examples and practice are temporarily unavailable. Your checked working is preserved."))
+    finally:
+        connection.close()
+
+
+def run_learning(question, topic, timeout=20.0):
+    """A separate bounded job keeps teaching failures from changing verdicts."""
+    from .practice import LearningPack
+    context = mp.get_context("spawn")
+    parent, child = context.Pipe(duplex=False)
+    process = context.Process(target=_calculate_learning, args=(child, question, topic), daemon=True)
+    try:
+        process.start()
+        child.close()
+        if parent.poll(timeout):
+            try:
+                return parent.recv()
+            except EOFError:
+                pass
+        return LearningPack(message="Verified examples and practice reached their time limit or stopped. Your checked working is preserved; check again to retry.")
+    finally:
+        if process.pid is not None:
+            if process.is_alive():
+                process.terminate()
+            process.join(timeout=1)
+        parent.close()
+        child.close()
+
+
 def _calculate(connection, question, lines, topic):
     try:
         from .checking import check_working

@@ -39,7 +39,7 @@ Build mode: learn. Concise explanations before each hands-on check; wait for lea
   Learner check: Enter 1/((x+1)*(x+2)), assign A/B terms and add A+B=0; inspect valid/incomplete status. Complete it, then introduce a wrong equation and inspect first-error feedback.
   Commit: `Check contextual partial-fraction working`
 
-- [ ] **4. Learn with verified examples and revealable practice solutions**
+- [x] **4. Learn with verified examples and revealable practice solutions**
   Becomes usable: Explanations and a worked example followed by three distinct targeted problems with initially hidden verified answers and worked solutions.
   Why now: Teaching builds on proven mathematical checks.
   PRD ref: `prd.md > Explanation and Practice`, `Acceptance Evidence`
@@ -61,7 +61,7 @@ Build mode: learn. Concise explanations before each hands-on check; wait for lea
 
 ## Hands-on Checkpoints
 
-Current status: Stages 1-3 complete. The learner accepted the detailed working and maths formatting and authorized the Stage 3 commit. Latest full suite: 148 tests passed. Stage 4 is next and has not started; the following earlier entries are the review history.
+Current status: Stages 1-4 complete and accepted by the learner. Stage 4 passed the full 163-test suite and the targeted UI checks after collapsible-panel refinements. The learner confirmed the final manual review and authorized the Stage 4 commit. Stage 5 is next and has not started; earlier entries below are the review history.
 
 
 Stage 1 complete: 48 automated checks passed, revised appearance passed learner hands-on review, and commit 93ba8e4 records the checkpoint. Stage 2 is in progress. Details: devpost/validation.md.
@@ -112,3 +112,11 @@ Activity mode: planned live app and editor.
 - Presentation review: use structural SymPy LaTeX rendering for submitted lines in feedback cards and notation examples, as well as question/step previews, generated working and answers. Symbolic factors use juxtaposition; adjacent numeric factors retain a multiplication dot. Render authored product-rule feedback as inline maths. Keep raw editable input, input-syntax instructions, stored drafts, parser and checking rules unchanged. Unsupported notation receives a preview-unavailable message rather than a guessed rendering. Stage 3 remains uncommitted.
 
 - Stage 3 accepted: learner approved worked steps and maths formatting and requested the completed stage be committed. Stage 4 remains unstarted pending the requested scope and acceptance-check report. No approved feature was deferred.
+
+- Stage 4 authorized: implement concept-first teaching, a separate verified example and exactly three distinct verified practice problems with individual hidden answer/solution toggles. Use separate bounded local generation, a reverified fallback bank and honest unavailable path. Clear stale practice and reveal state on edits/recheck/reset. Preserve automatic-grading deferral. Stage 4 stays unchecked and uncommitted until hands-on review.
+
+- Stage 4 ready for review: full suite passed 163 tests in 171.086 seconds; dependency consistency and whitespace checks passed. Loopback server restarted and health returned ok. Verified concept-first teaching, separate example, three distinct exercises, per-item hidden solutions, exact maths/domain checks, invalid-content rejection and fallback/unavailable paths, and edit/reorder/topic/reset invalidation. Await learner feedback before committing or checking the Stage 4 box.
+
+- Stage 4 review refinement: the concept explanation and separate worked example now have independent expand/collapse controls. Both start open, preserving explanation-before-example-before-practice order. Practice answer reveals remain independent and initially hidden. Stage 4 stays uncommitted pending learner review.
+
+- Stage 4 accepted: learner confirmed that the final version works correctly and passes review, and authorized the commit. Automatic practice grading remains deferred. Stage 5 remains unstarted while its scope and acceptance checks are reported.

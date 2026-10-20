@@ -6,6 +6,19 @@ from workcheck.models import CheckResult
 
 
 class WorkerTests(unittest.TestCase):
+    def test_learning_in_real_bounded_worker(self):
+        from workcheck.worker import run_learning
+        pack = run_learning("x^2*sin(x)", "Differentiation")
+        self.assertEqual(len(pack.practice), 3)
+        self.assertTrue(pack.example["verified"])
+
+    def test_learning_timeout_has_no_unverified_content(self):
+        from workcheck.worker import run_learning
+        pack = run_learning("x^2*sin(x)", "Differentiation", timeout=0.001)
+        self.assertEqual(pack.practice, [])
+        self.assertIsNone(pack.example)
+        self.assertTrue(pack.message)
+
     def test_display_failure_keeps_checking_result(self):
         from workcheck.worker import _calculate
         class Connection:

@@ -88,3 +88,5 @@
   .wc-hero-math { display: none; }
   .wc-topics, .wc-learning-panels { grid-template-columns: 1fr; }
 }
+
+.st-key-explanation_panel {background:#EFF6FF;} .st-key-teaching_example_panel {background:#F5F3FF;} [class*="st-key-practice_panel_"] {background:#FFFBEB;} .st-key-teaching_example_panel [data-testid="stLatex"], [class*="st-key-practice_panel_"] [data-testid="stLatex"] {background:#FFFFFF; color:#14213D; border-radius:8px;}

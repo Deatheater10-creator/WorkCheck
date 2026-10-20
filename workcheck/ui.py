@@ -6,10 +6,66 @@ from html import escape
 import streamlit as st
 
 from .parser import LIMITS, InputIssue, derivative_label_latex, parse_step, question_expression
-from .worker import run_check
+from .worker import run_check, run_learning
 from .storage import DraftStore, SaveError, empty_draft
 from .partial_fractions import parse_partial_line
 from .presentation import school_latex, feedback_markdown
+
+
+@st.cache_data(show_spinner=False, max_entries=32)
+def cached_learning(question, topic):
+    pack = run_learning(question, topic)
+    if len(pack.practice) != 3 or not pack.example:
+        # Failed jobs must be retried, rather than cached as a permanent failure.
+        raise ValueError(pack.message or "Verified practice is temporarily unavailable. Check again to retry.")
+    return pack
+
+
+def clear_learning():
+    st.session_state.practice = []
+    st.session_state.learning = None
+    for key in list(st.session_state):
+        if key.startswith("reveal_practice_"):
+            del st.session_state[key]
+
+
+def show_worked_steps(steps):
+    for number, step in enumerate(steps, 1):
+        st.markdown(f"**{number}. {step['instruction']}**")
+        for index, equation in enumerate(step["math"]):
+            maths, explanation = st.columns([3, 2])
+            maths.latex(equation)
+            if step.get("explanations"):
+                explanation.write(step["explanations"][index])
+
+
+def show_learning(pack):
+    if pack is None:
+        return
+    if pack.example:
+        with st.container(border=True, key="teaching_example_panel"):
+            with st.expander("Worked example", expanded=True):
+                st.subheader("Worked example")
+                st.caption("A different question using the same main method.")
+                st.latex(pack.example["question_latex"])
+                show_worked_steps(pack.example["worked_solution"])
+    if len(pack.practice) == 3:
+        st.subheader("Your three practice problems")
+        st.caption("Try each problem yourself, then reveal its answer and full working. Practice attempts are not automatically graded.")
+        for index, item in enumerate(pack.practice):
+            with st.container(border=True, key=f"practice_panel_{index}"):
+                st.markdown(f"**Practice {index+1}**")
+                st.write("Decompose into partial fractions." if st.session_state.topic == "Partial fractions" else "Differentiate with respect to x.")
+                st.latex(item["question_latex"])
+                st.caption("Restrictions")
+                st.latex(item["restrictions_latex"])
+                if st.toggle(f"Reveal answer and worked solution {index+1}", key=f"reveal_practice_{index}"):
+                    st.markdown("**Answer**")
+                    label = r"\frac{dy}{dx} = " if st.session_state.topic == "Differentiation" else ""
+                    st.latex(label + item["answer_latex"])
+                    show_worked_steps(item["worked_solution"])
+    if pack.message:
+        st.warning(pack.message)
 
 
 def save_current():
@@ -82,7 +138,7 @@ def confirm_new_question():
     st.session_state.revision = draft["revision"]
     st.session_state.result = None
     st.session_state.result_revision = None
-    st.session_state.practice = []
+    clear_learning()
     st.session_state.confirm_new_question = False
     st.session_state.recovery_warning = ""
     st.session_state.save_message = "New question started. The previous saved working has been cleared."
@@ -93,7 +149,7 @@ def invalidate():
     st.session_state.revision += 1
     st.session_state.result = None
     st.session_state.result_revision = None
-    st.session_state.practice = []
+    clear_learning()
     if st.session_state.get("draft_initialized"):
         save_current()
 
@@ -170,6 +226,14 @@ def show_result(result):
     with st.container(border=True, key="explanation_panel"):
         st.markdown("**Explanation · understand your working**")
         st.markdown(feedback_markdown(result.explanation))
+        pack = st.session_state.get("learning")
+        if pack and pack.concepts:
+            with st.expander("Understand the concept", expanded=True):
+                st.subheader("Understand the concept")
+                for concept in pack.concepts:
+                    st.markdown("**" + concept["title"] + "**")
+                    st.write(concept["explanation"])
+                    st.latex(concept["formula"])
     for step in result.steps:
         with st.container(border=True):
             if step.status in ("Correct final answer", "Valid intermediate step"):
@@ -198,16 +262,12 @@ def show_result(result):
             st.latex(result.restrictions_display_latex or (r"x \in " + result.domain_latex))
     if result.worked_solution:
         with st.container(border=True, key="worked_solution_panel"):
-            st.subheader(result.worked_solution_title)
-            for number, step in enumerate(result.worked_solution, 1):
-                st.markdown(f"**{number}. {step['instruction']}**")
-                for index, equation in enumerate(step["math"]):
-                    maths, explanation = st.columns([3, 2])
-                    maths.latex(equation)
-                    if step.get("explanations"):
-                        explanation.write(step["explanations"][index])
+            with st.expander(result.worked_solution_title, expanded=True):
+                st.subheader(result.worked_solution_title)
+                show_worked_steps(result.worked_solution)
     if result.presentation_note:
         st.caption(result.presentation_note)
+    show_learning(st.session_state.get("learning"))
 
 
 def main():
@@ -215,7 +275,7 @@ def main():
     styles = Path(__file__).with_name("styles.css").read_text(encoding="utf-8")
     st.markdown(f"<style>{styles}</style>", unsafe_allow_html=True)
     defaults = {"question": "", "topic": "Differentiation", "lines": [], "revision": 0,
-                "result": None, "result_revision": None, "practice": []}
+                "result": None, "result_revision": None, "practice": [], "learning": None}
     for key, value in defaults.items():
         if key not in st.session_state:
             st.session_state[key] = value
@@ -234,7 +294,7 @@ def main():
       <section class="wc-topic wc-topic-amber"><span class="wc-topic-symbol" aria-hidden="true">A / (x+a)</span>
       <strong>Partial fractions</strong><p>Follow the decomposition and coefficient equations.</p><span class="wc-topic-badge">AVAILABLE · TWO LINEAR FACTORS</span></section>
     </div>''', unsafe_allow_html=True)
-    st.caption("Local maths checking · Your draft stays on this device. Targeted practice arrives in a later stage. Photo recognition is not enabled.")
+    st.caption("Local maths checking and verified practice · Your draft stays on this device. Photo recognition is not enabled.")
     if st.session_state.recovery_warning:
         st.warning(st.session_state.recovery_warning)
     st.button("New question", on_click=request_new_question)
@@ -299,20 +359,31 @@ def main():
     if len(st.session_state.lines) > 20:
         st.warning("The 20-line checking limit is exceeded. Your lines remain intact; delete or combine lines to check them.")
     if st.button("Check working", type="primary"):
+        clear_learning()
         save_current()
         revision = st.session_state.revision
         question = st.session_state.question
         lines = [line["text"] for line in st.session_state.lines]
         with st.spinner("Checking locally with exact mathematical rules…"):
             result = run_check(question, lines, topic=st.session_state.topic)
+        learning = None
+        if result.answer_latex:
+            with st.spinner("Verifying your worked example and three practice solutions locally…"):
+                try:
+                    learning = cached_learning(question, st.session_state.topic)
+                except ValueError as exc:
+                    from .practice import LearningPack
+                    learning = LearningPack(message=str(exc))
         if revision == st.session_state.revision:
             st.session_state.result = result
             st.session_state.result_revision = revision
+            st.session_state.learning = learning
+            st.session_state.practice = learning.practice if learning else []
     if st.session_state.result is not None and st.session_state.result_revision == st.session_state.revision:
         show_result(st.session_state.result)
     st.markdown('''<div class="wc-learning-panels">
       <section class="wc-learning-panel wc-example"><span class="wc-coming">Understand the method</span>
-      <h3>See the method in action</h3><p>Partial-fraction results include the coefficient method. More guided examples will arrive with targeted practice.</p></section>
-      <section class="wc-learning-panel wc-practice"><span class="wc-coming">Coming next · targeted practice</span>
-      <h3>Turn understanding into practice</h3><p>Three targeted questions with revealable, verified solutions are planned for a later stage. Practice is not available yet.</p></section>
+      <h3>See the method in action</h3><p>Check a supported question to see the concept explained before a fully worked example.</p></section>
+      <section class="wc-learning-panel wc-practice"><span class="wc-coming">Verified targeted practice</span>
+      <h3>Turn understanding into practice</h3><p>Three distinct questions follow the example. Reveal each answer and full worked solution when you are ready.</p></section>
     </div>''', unsafe_allow_html=True)

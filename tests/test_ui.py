@@ -6,6 +6,86 @@ from streamlit.testing.v1 import AppTest
 
 
 class UITests(unittest.TestCase):
+    def test_teaching_order_individual_reveals_and_question_invalidation(self):
+        app = self.app()
+        app.text_input(key="question").set_value("x^2*sin(x)").run()
+        self.click(app, "Add step")
+        app.text_input[1].set_value("dy/dx=2*x*cos(x)").run()
+        self.click(app, "Check working")
+        self.assertEqual(app.session_state["result"].status, "First mistake")
+        self.assertEqual(len(app.session_state["practice"]), 3)
+        learning_panels = [panel for panel in app.expander if panel.label in ("Understand the concept", "Worked example")]
+        self.assertEqual([panel.label for panel in learning_panels], ["Understand the concept", "Worked example"])
+        self.assertTrue(all(panel.proto.expanded for panel in learning_panels))
+        self.assertTrue(any(panel.label == "Worked solution · differentiation" and panel.proto.expanded for panel in app.expander))
+        self.assertEqual(len(app.toggle), 3)
+        self.assertTrue(all(not toggle.value for toggle in app.toggle))
+        headings = [heading.value for heading in app.subheader]
+        self.assertLess(headings.index("Understand the concept"), headings.index("Worked example"))
+        self.assertLess(headings.index("Worked example"), headings.index("Your three practice problems"))
+        self.assertFalse(any(item.value == "**Answer**" for item in app.markdown))
+        for index in range(3):
+            app.toggle[index].set_value(True).run()
+            self.assertEqual(sum(item.value == "**Answer**" for item in app.markdown), index+1)
+        app.toggle[0].set_value(False).run()
+        self.assertEqual(sum(item.value == "**Answer**" for item in app.markdown), 2)
+        app.text_input(key="question").set_value("(2x+3)^4").run()
+        self.assertEqual(app.session_state["practice"], [])
+        self.assertIsNone(app.session_state["learning"])
+        self.assertEqual(len(app.toggle), 0)
+        self.click(app, "Check working")
+        self.assertEqual(len(app.toggle), 3)
+        self.assertTrue(all(not toggle.value for toggle in app.toggle))
+        self.assertEqual(len(app.exception), 0)
+
+    def test_partial_practice_and_working_topic_reset_invalidation(self):
+        app = self.app()
+        app.selectbox(key="topic").select("Partial fractions").run()
+        app.text_input(key="question").set_value("1/((x+1)*(x+2))").run()
+        self.click(app, "Add step")
+        app.text_input[1].set_value("A/(x+1)+B/(x+2)").run()
+        self.click(app, "Check working")
+        self.assertEqual(len(app.session_state["practice"]), 3)
+        app.toggle[0].set_value(True).run()
+        self.click(app, "New question")
+        self.click(app, "Cancel")
+        self.assertTrue(app.toggle[0].value)
+        app.text_input[1].set_value("B/(x+1)+A/(x+2)").run()
+        self.assertIsNone(app.session_state["learning"])
+        self.assertEqual(len(app.toggle), 0)
+        self.click(app, "Check working")
+        self.assertTrue(all(not toggle.value for toggle in app.toggle))
+        self.click(app, "Add step")
+        self.assertEqual(len(app.toggle), 0)
+        app.text_input[2].set_value("A+B=0").run()
+        self.click(app, "Check working")
+        app.toggle[1].set_value(True).run()
+        next(button for button in app.button if button.key and button.key.startswith("up_") and not button.disabled).click().run()
+        self.assertIsNone(app.session_state["learning"])
+        self.click(app, "Check working")
+        self.assertTrue(all(not toggle.value for toggle in app.toggle))
+        app.selectbox(key="topic").select("Differentiation").run()
+        self.assertEqual(len(app.toggle), 0)
+        app.text_input(key="question").set_value("ln(x+1)").run()
+        self.click(app, "Check working")
+        app.toggle[2].set_value(True).run()
+        self.click(app, "New question")
+        self.click(app, "Clear question and working")
+        self.assertEqual(len(app.toggle), 0)
+        self.assertEqual(app.session_state["practice"], [])
+        self.assertIsNone(app.session_state["learning"])
+        self.assertEqual(len(app.exception), 0)
+
+    def test_practice_unavailable_never_replaces_verified_verdict(self):
+        from workcheck.practice import LearningPack
+        app = self.app()
+        app.text_input(key="question").set_value("x^2").run()
+        with patch("workcheck.ui.cached_learning", return_value=LearningPack(message="Verified practice temporarily unavailable.")):
+            self.click(app, "Check working")
+        self.assertEqual(app.session_state["result"].status, "Solution")
+        self.assertEqual(len(app.toggle), 0)
+        self.assertTrue(any("practice temporarily unavailable" in warning.value for warning in app.warning))
+
     def test_feedback_uses_rendered_submitted_maths_in_both_topics(self):
         app = self.app()
         for topic, question, working in [
