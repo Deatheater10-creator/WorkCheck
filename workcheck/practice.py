@@ -98,7 +98,7 @@ def verify_candidate(candidate, topic):
 def build_learning(question, topic):
     if not check_working(question, [], topic).answer_latex:
         return LearningPack(message="Practice needs a supported question first. Clarify the question and check again.")
-    source = question_expression(question)
+    source = question_expression(question, topic=topic)
     concepts = concepts_for(source.expr, topic)
     pack = LearningPack(concepts=concept_notes(concepts))
     concept = concepts[0]

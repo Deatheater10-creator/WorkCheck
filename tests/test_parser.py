@@ -4,6 +4,26 @@ from workcheck.parser import X, InputIssue, parse_expression, parse_step, questi
 
 
 class ParserTests(unittest.TestCase):
+    def test_ordinary_products_including_after_powers(self):
+        forms = [('2x', 2*X), ('x^3 cos(x)', X**3*sp.cos(X)),
+                 ('x sin(x)', X*sp.sin(X)), ('2(x+1)', 2*(X+1)),
+                 ('(x+1)(x-2)', (X+1)*(X-2)),
+                 ('3x^2 sin(2x)', 3*X**2*sp.sin(2*X)),
+                 ('x^2(x+1)', X**2*(X+1)), ('x^2 x', X**3),
+                 ('2 × 3', sp.Integer(6)), ('2 · x', 2*X)]
+        for text, expected in forms:
+            with self.subTest(text=text):
+                self.assertEqual(sp.simplify(parse_expression(text).expr-expected), 0)
+        self.assertEqual(question_expression('f(x) = x^3 cos(x)').function_label, 'f(x)')
+        self.assertEqual(sp.simplify(question_expression('f(x) = x^3 cos(x)').expr-X**3*sp.cos(X)), 0)
+
+    def test_ordinary_clarification_never_requires_programming_multiplication(self):
+        for text in ['1/2x', '1/2 x', 'x^2x', 'x^2cos(x)', 'xsin(x)', '2 3']:
+            with self.subTest(text=text), self.assertRaises(InputIssue) as caught:
+                parse_expression(text)
+            self.assertNotIn('*', str(caught.exception))
+        for text, expected in [('(1/2)x', X/2), ('1/(2x)', 1/(2*X)), ('(x^2)x', X**3)]:
+            self.assertEqual(sp.simplify(parse_expression(text).expr-expected), 0)
     def test_labelled_questions_with_implicit_multiplication(self):
         for text, label, expected in [
             ("f(x) = (2x + 3)^4", "f(x)", (2*X+3)**4),

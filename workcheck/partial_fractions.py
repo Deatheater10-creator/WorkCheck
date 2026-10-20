@@ -177,7 +177,7 @@ def _coefficient_equation(line, context):
 
 def check_partial_fractions(question, lines):
     try:
-        parsed_source = question_expression(question)
+        parsed_source = question_expression(question, topic="Partial fractions")
         source = sp.cancel(parsed_source.expr)
         roots = _roots(source)
         domain = domain_of(parsed_source)

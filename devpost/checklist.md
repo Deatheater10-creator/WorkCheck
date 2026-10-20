@@ -49,7 +49,7 @@ Build mode: learn. Concise explanations before each hands-on check; wait for lea
   Learner check: Trigger a product-rule mistake, read explanation/example, inspect three practice questions and reveal each solution. Edit input and verify old practice disappears.
   Commit: `Add verified teaching and revealable practice`
 
-- [ ] **5. Verify offline use and document actual coverage**
+- [x] **5. Verify offline use and document actual coverage**
   Becomes usable: Documented Windows launch, actual coverage/results, and honest photo recognition status.
   Why now: Validates the integrated journey before submission claims.
   PRD ref: `prd.md > Photo Input and Confirmation`, `Acceptance Evidence`
@@ -61,7 +61,7 @@ Build mode: learn. Concise explanations before each hands-on check; wait for lea
 
 ## Hands-on Checkpoints
 
-Current status: Stages 1-4 complete and accepted by the learner. Stage 4 passed the full 163-test suite and the targeted UI checks after collapsible-panel refinements. The learner confirmed the final manual review and authorized the Stage 4 commit. Stage 5 is next and has not started; earlier entries below are the review history.
+Current status: All five build slices are complete. The learner approved the ordinary-notation parser fixes, confirmed their offline checks passed, and authorized the Stage 5 commit. Latest guarded suite: 177 tests passed; fresh offline browser flows passed. Final readiness sign-off and the code tour/app map remain unfinished before 6-ship. Earlier entries below are the review history.
 
 
 Stage 1 complete: 48 automated checks passed, revised appearance passed learner hands-on review, and commit 93ba8e4 records the checkpoint. Stage 2 is in progress. Details: devpost/validation.md.
@@ -73,7 +73,7 @@ Stage 3 mechanical verification: 129 tests passed, including the full coefficien
 Stage-3 presentation revision: 143 tests now pass, including positive-first answers, compact exclusions, verified five-step coefficient-method display, equivalent-answer acceptance, and unchanged checking results if presentation fails. Restarted app for review; stage-3 checkbox and commit remain pending as requested.
 
 - [x] Early usable behavior explored — learner confirmed stage 1 passed hands-on checks after the appearance revision
-- [ ] Final kick-the-tires exploration and feedback completed — after slice 5
+- [x] Final kick-the-tires exploration and feedback completed — after slice 5
 
 Learn mode includes each slice's learner check. Fast mode pauses at these planned checkpoints and at consequential plan changes.
 
@@ -120,3 +120,17 @@ Activity mode: planned live app and editor.
 - Stage 4 review refinement: the concept explanation and separate worked example now have independent expand/collapse controls. Both start open, preserving explanation-before-example-before-practice order. Practice answer reveals remain independent and initially hidden. Stage 4 stays uncommitted pending learner review.
 
 - Stage 4 accepted: learner confirmed that the final version works correctly and passes review, and authorized the commit. Automatic practice grading remains deferred. Stage 5 remains unstarted while its scope and acceptance checks are reported.
+
+- Stage 5 authorized: verify offline setup/runtime, document actual supported maths and limits, and investigate photo recognition separately. Added exact beginner Windows commands and a folder-independent launch helper. Retain approved typed-only fallback because local handwriting recognition is not demonstrated. Automatic practice grading remains deferred. Await final mechanical evidence and learner offline review before committing.
+
+- Stage 5 ready for review: 163 tests passed in 197.585 seconds under a self-tested nonlocal socket guard, with no suite network attempts. Clean pinned installation and dependency consistency passed. The fresh Edge browser flow passed for maths rendering/local assets, both topic routes, learning/reveals, refresh/server-restart restoration and reset. Windows helper launch/loopback binding/stop passed. Documented actual supported forms, resource limits, initial failed verification attempts and remaining physical-offline/personal-browser checks. Photo recognition retains the approved typed fallback; no other feature was deferred. Stage 5 remains unchecked and uncommitted.
+
+- During pending Stage 5 review, learner requested safe common-sentence interpretation. Added explicit task/expression extraction and student confirmation for supported forms; kept complex/branch-sensitive maths and point evaluation unsupported. New parser, mathematics-boundary and UI-flow regressions are being verified under the offline guard. Existing Stage 5 docs, launch helper, coverage/photo findings and verification tooling remain intact; all changes remain uncommitted.
+
+- Sentence refinement verified: 171 guarded tests passed and the fresh offline browser sentence/confirmation/unsupported-complex flow passed. Preserved all pending Stage 5 changes and the typed-only photo fallback. Await learner review; Stage 5 remains unchecked and uncommitted.
+
+- Learner requested ordinary multiplication as default throughout WorkCheck. Fixed clear factor boundaries after powers, updated student guidance/default examples, and retained ambiguity/name/safety checks and explicit-input compatibility. Added parser, hand-calculated derivative/working and UI learning regressions. Stage 5 and its existing pending changes remain uncommitted for review.
+
+- Ordinary-notation refinement ready for review: 177 guarded tests passed and the fresh offline Edge ordinary-question/working flow passed. Existing Stage 5 changes are preserved; no commit made.
+
+- Stage 5 accepted: learner confirmed ordinary mathematical notation passes review and their offline checks passed, and requested committing Stage 5 plus the reviewed parser fixes. Record those manual checks as learner-performed; do not treat them as agent-performed or imply a new-machine installation was tested. Final Review readiness sign-off and Code Tour and App Map remain pending. Report the remaining 5-build workflow before starting it. Photo recognition retains the approved typed fallback; automatic practice grading remains deferred.

@@ -230,7 +230,7 @@ def present_result(result, question, topic):
     """Attach display metadata, preserving raw answers and all checked statuses."""
     if not result.answer_latex:
         return result
-    parsed = question_expression(question)
+    parsed = question_expression(question, topic=topic)
     domain = domain_of(parsed)
     if topic == "Partial fractions":
         answer = sp.apart(sp.cancel(parsed.expr), X)

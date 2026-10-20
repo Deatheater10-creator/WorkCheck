@@ -146,3 +146,86 @@ Learner reported no visible change. Restarted the existing local server from the
 ## Stage 4 accepted
 
 Learner confirmed Stage 4 now works correctly and passes hands-on review, and authorized committing it. Latest full suite: 163 tests passed in 171.086 seconds. After presentation-only collapsible-panel refinements, relevant differentiation and partial-fraction UI checks passed; the last differentiation teaching/reveal/invalidation run passed in 20.056 seconds. Server restart and loopback health were verified. No mathematical generation/checking changes followed the full suite. Stage 4 is complete. Automatic practice grading remains deferred. Stage 5 has not started; the next action is to report its saved scope and acceptance checks.
+
+
+## Stage 5 - offline verification and coverage (review pending, 2026-10-20)
+
+### Agent-performed Windows checks
+
+Environment: Windows 11 x64 build 26100; Python 3.12.0; SymPy 1.14.0; Streamlit 1.66.0; installed Edge 155.0.4283.62. These versions describe the device used, not a promise for untested systems.
+
+- The documented `py -3.12 --version` and `py -3.12 -m venv .workcheck/launcher-setup-check` commands succeeded in normal Windows execution. The launcher's first restricted-session probe could not see the installation; normal execution confirmed Python is installed. README includes a `python` fallback only when its version is 3.12.x.
+- Created a separate clean `.workcheck/setup-check` virtual environment. Downloaded all 37 pinned Windows-compatible package wheels while online, then installed with `--no-index --find-links .workcheck/wheels -r requirements-lock.txt`. The clean installation succeeded and `pip check` reported no broken requirements. Original runtime dependencies and the lock file are unchanged. This is a clean installation from predownloaded wheels, not a claim that first-time installation needs no internet.
+- Started the documented Streamlit command using that clean environment during the browser test. The separate app bound to 127.0.0.1:8503, with telemetry disabled and an isolated test draft. The current student's draft and normal server were not used for test input.
+- Launched start-workcheck.ps1 from `.workcheck/` rather than the project root, using PowerShell's process-only ExecutionPolicy Bypass option and `-Port 8504`. Health returned ok; netstat showed only 127.0.0.1:8504 listening, with no wildcard listener on that port. Ctrl+C stopped it and a subsequent connection check confirmed the port was closed.
+
+### Cold offline browser flow
+
+Successful trace: `.workcheck/offline-23d43446/report.json` (local ignored artifact). Command: `.\.workcheck\setup-check\Scripts\python.exe scripts/offline_browser_check.py`.
+
+Used a new Edge profile, disabled the page cache, allowed only the local test-app origin through CDP request interception, and configured a local proxy refusing all other HTTP/HTTPS traffic (QUIC disabled). A Python sitecustomize socket guard refused nonloopback connections in the server and inherited maths workers. This isolated test did not switch off Windows networking or alter the user's browser profile or real draft.
+
+Verified in the browser:
+
+1. Cold page load with no previous browser cache.
+2. `x^2*sin(x)` with `dy/dx=2*x*cos(x)` reports the first product-rule mistake and displays concept notes, actual worked transformations, a separate example and three exercises.
+3. Real KaTeX DOM rendered equations, with more than ten nonzero-height maths containers, no KaTeX parse errors, and no programming multiplication in rendered maths. The trace includes local KaTeX JavaScript and KaTeX AMS/Main/Math-Italic font files served from 127.0.0.1, rather than a CDN.
+4. All three answers/full solutions start hidden and reveal individually.
+5. Refresh restores the exact question and working; old practice/reveals are not restored.
+6. Stopping and restarting the isolated server restores the same saved draft.
+7. New question Cancel preserves the draft; confirmed clearing empties both screen and save, including after refresh.
+8. Switching to Partial fractions, checking `1/((x+1)*(x+2))` with the A/B setup and wrong `A+B=1` gives first-error feedback, learning, original -1/-2 exclusions and an individually revealed practice solution.
+
+Completed trace: **0 external page requests, 0 backend nonlocal connection attempts, 0 JavaScript exceptions**; 108 distinct recorded requests, all application resources local. The proxy separately refused 42 browser-background requests (Microsoft/Bing services), which are not WorkCheck page requests. The browser's background activity must not be reported as if the operating system had been physically disconnected.
+
+Harness development required streamed-control readiness waits, real keyboard input to commit edits, native switch selectors and typed selection of the accessible combobox. Earlier harness runs failed at those control interactions; they are not counted as complete passes. Successful screenshots and request records remain in the ignored run directory.
+
+### Separate photo investigation
+
+See photo-feasibility.md for official repository sources and evidence gaps. No torch/pix2tex/texify/surya installation, OCR checkpoint download, representative handwriting benchmark or editable-recognition-confirmation flow was demonstrated. Retain the learner-approved typed-only fallback. This does not assert that offline handwriting recognition is impossible. No external AI service is integrated. Automatic practice grading remains deferred.
+
+### Learner checks still required
+
+The agent has not performed a physical Wi-Fi/Ethernet-disconnected test, a new Python installer walkthrough, installation on another Windows machine, or visual/accessibility checks in the learner's personal browser. The final manual review should follow README from a normal terminal, disconnect internet after setup, use a fresh/InPrivate browser session, check rendered maths/feedback/learning/reveals, restart to restore a saved draft, and inspect input-limit/reset behavior. Reconnect afterwards to report findings. Do not infer those manual checks from automation.
+
+Stage 5 remains unchecked and uncommitted until learner review. Full guarded-suite results follow.
+
+
+### Final guarded-suite result
+
+Command: `.\.workcheck\setup-check\Scripts\python.exe scripts/offline_browser_check.py --tests-only`.
+
+**163 tests passed in 197.585 seconds**, in the freshly installed pinned environment, with the socket guard inherited by child workers. The guard first rejected a deliberate connection to reserved test address 203.0.113.1 without making the connection, confirming enforcement. The subsequent suite recorded **zero nonlocal connection attempts**. Report: `.workcheck/offline-8658d937/suite-report.json`; full test output: `.workcheck/offline-8658d937/tests.log`. This includes maths checking, exact domains, examples/practice verification, hidden/reveal and stale-state controls, local restoration/reset, corrupt/missing files, write failure and input limits. Clean `pip freeze` exactly matches all 37 lock entries; `pip check` and diff whitespace checks pass.
+
+An earlier guarded run performed concurrently with browser verification ended with three UI failures (missing practice or an unexpected clarification status). Those failures were not accepted as a pass. The cause was not conclusively isolated; CPU/startup timing was suspected. The final run above was serial and passed without changing the runtime checker or its deadlines. README explains that resource timeouts preserve input and are not mathematical-error verdicts.
+
+Agent inspection also confirmed rendered browser preview equations and local font/renderer assets. Personal-browser appearance, physical network-disconnected operation and the learner's final exploration remain unperformed by the agent. No Stage 5 commit or approval is claimed.
+
+
+## Sentence interpretation during pending Stage 5 review
+
+Added a bounded local wording layer shared by question previews, topic-specific checking, display and learning. It preserves the original draft and the safe AST maths grammar. Explicit Differentiate/Find the derivative, Let/Given definitions with matching derivative requests, and Decompose/Express/Write/Find partial-fractions forms are recognised. Complete clause matching prevents silent dropping of additional or mismatched tasks. The UI shows rendered extracted maths and the task; sentences require confirmation before checking. Question/topic changes and restored sessions reset confirmation; working edits still invalidate results/practice.
+
+Unrecognised wording, unsupported notation, topic mismatch and unsupported mathematics have separate messages. The exact request `Let f(x) = ln(x)/ln(-x). Find the imaginary coefficient of f'(1).` displays its recognised definition and a complex-log branch/component/derivative-evaluation limitation. A test patches differentiation to fail if called and proves the request is rejected before differentiating; no answer or practice is generated. No complex branch, analytic continuation, or derivative point-evaluation support was added.
+
+Expanded guarded suite: **171 tests passed in 169.876 seconds**, zero nonlocal connection attempts, guard self-test passed. Artifact: `.workcheck/offline-b1aea911/suite-report.json`. Includes supported sentence forms, actual derivatives and contextual coefficient checking, full differentiation UI learning after confirmation, disabled unsupported complex flow, confirmation invalidation, whole-question limits and unsafe-input rejection, plus prior regressions. Six focused wording tests also passed after the final Please/the-function/Given-that and additional-clause refinements. Existing Stage 5 setup/browser evidence is retained, not overwritten. Changes remain uncommitted pending review.
+
+Cold-browser offline sentence run passed: `.workcheck/offline-7afd118b/report.json`. Verified visible expression/task, disabled checking until confirmation, full product-rule learning/reveal flow, refresh/server-restart restoration, partial-fraction routing and the exact unsupported complex-log request with no answer/practice. External page requests and backend nonlocal attempts were both zero. Normal server restarted for review without modifying the saved draft.
+
+
+## Ordinary mathematical multiplication refinement
+
+The token-based normalizer previously rejected a clear next factor after a literal exponent. It now distinguishes a separated factor (x^3 cos(x), 3x^2 sin(2x), x^2 x) or following parentheses from an unclear unspaced exponent boundary. Division such as 1/2x still requires explicit grouping. Recognised function identifiers remain intact and unknown names are never split. Ordinary multiplication signs are accepted as operator aliases and still pass through the restricted AST parser. No eval/sympify of input or mathematical feature expansion was introduced. Explicit legacy operators remain accepted internally.
+
+Updated student placeholders, help, preview examples and README defaults so no programming multiplication symbol is required. Ambiguity messages give ordinary spacing/grouping or numeric multiplication alternatives. All mathematical output retains structural LaTeX rendering; original draft text remains intact. Practice attempts still have no dedicated input and automatic grading remains deferred.
+
+Added hand-calculated fixtures for 2x, x^3 cos(x), x sin(x), 2(x+1), (x+1)(x-2), 3x^2 sin(2x), and labelled f(x)=x^3 cos(x), checking exact derivatives and ordinary working. Added unfinished product-rule and context-aware A(x+2)/2A coefficient cases, ordinary numeric operators, ambiguity messages without programming operators, and a UI preview/check/learning regression.
+
+Full guarded suite: **177 tests passed in 202.379 seconds**, guard self-test passed and zero nonlocal connection attempts. Artifact: `.workcheck/offline-58777f54/suite-report.json`. Existing unsafe-input, domain, sentence-confirmation, complex-request rejection, storage, practice and worker tests remain passing. Separate targeted runs passed the 22 parser tests and 3 ordinary-notation mathematical tests. All pending Stage 5 changes are retained and uncommitted.
+
+Fresh offline Edge run `scripts/offline_browser_check.py --ordinary` passed: `.workcheck/offline-a730208a/report.json`. Used `Differentiate f(x) = x^3 cos(x).` and incorrect product-of-derivatives working `f'(x)=-3x^2 sin(x)` without programming multiplication. Verified confirmation, first-error learning, conventional rendering, individual practice reveals, refresh/server-restart restoration, ordinary partial-fraction input and the existing complex-request limitation. External page requests and backend nonlocal attempts were zero. Normal app restarted for learner review.
+
+
+## Stage 5 and parser refinements accepted
+
+The learner explicitly confirmed that ordinary maths notation passes review and their offline checks passed, and authorized committing Stage 5 with the reviewed parser changes. This adds learner-performed offline evidence to the prior agent-run scoped network-blocking checks; it does not claim the agent physically disconnected the device or tested a fresh Python installer on another computer. Latest guarded suite remains 177 tests passed in 202.379 seconds, with zero nonlocal connection attempts. The fresh offline browser ordinary-input/working/learning flow also passed. Only documentation/progress records changed after that verified code. Stage 5 is complete. Final readiness sign-off, code tour and app map remain pending before 6-ship. Photo recognition remains the approved typed-only fallback, and automatic practice grading remains deferred.

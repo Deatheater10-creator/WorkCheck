@@ -44,7 +44,7 @@ def _normalize_multiplication(source, *, allow_coefficients=False):
     Python's tokenizer only identifies tokens; it does not execute the input.
     The existing restricted AST builder still checks all syntax and limits.
     """
-    hint = "Use * and parentheses to clarify, for example 2*(x+1) or x*sin(x)."
+    hint = "Use ordinary products such as 2x, 2(x+1), and x sin(x). Keep function names whole and use parentheses to clarify grouping."
     try:
         raw = list(tokenize.generate_tokens(io.StringIO(source).readline))
     except (tokenize.TokenError, IndentationError, SyntaxError):
@@ -72,13 +72,17 @@ def _normalize_multiplication(source, *, allow_coefficients=False):
             starts_factor = token.type in (tokenize.NUMBER, tokenize.NAME) or token.string == "("
             if ends_factor and starts_factor:
                 if previous.type == token.type == tokenize.NUMBER:
-                    raise InputIssue("Two adjacent numbers are ambiguous. Put * between numbers you want to multiply.")
+                    raise InputIssue("Two adjacent numbers are ambiguous. Write 2 × 3 or 2(3) to multiply numbers.")
                 # Do not guess 1/2x, x^2x, or their signed variants.
                 before = i-2
                 if before >= 0 and tokens[before].string in {"+", "-"}:
                     before -= 1
-                if before >= 0 and tokens[before].string in {"/", "**"}:
-                    raise InputIssue("Ambiguous multiplication after division or a power. Write 1/(2*x), (1/2)*x, or (x^2)*x as intended.")
+                if before >= 0 and tokens[before].string == "/":
+                    raise InputIssue("Ambiguous multiplication after division. Write 1/(2x) or (1/2)x to clarify the denominator.")
+                if before >= 0 and tokens[before].string == "**":
+                    separated = previous.end < token.start
+                    if not separated and token.string != "(":
+                        raise InputIssue("Ambiguous multiplication after a power. Write (x^2)x or x^2 x to separate the exponent from the next factor; group a full exponent in parentheses.")
                 output.append((tokenize.OP, "*"))
         output.append((token.type, token.string))
     return tokenize.untokenize(output)
@@ -87,14 +91,14 @@ def _normalize_multiplication(source, *, allow_coefficients=False):
 def parse_expression(text: str, *, allow_d: bool = False, allow_coefficients: bool = False) -> Expression:
     if len(text) > MAX_CHARS:
         raise InputIssue("The 500-character limit is exceeded. Your text has been kept.")
-    source = text.strip().replace("^", "**")
+    source = text.strip().replace("^", "**").replace("×", "*").replace("·", "*")
     if not source:
         raise InputIssue("Enter a mathematical expression.")
     source = _normalize_multiplication(source, allow_coefficients=allow_coefficients)
     try:
         root = ast.parse(source, mode="eval")
     except (SyntaxError, ValueError, RecursionError):
-        raise InputIssue("I cannot read this notation. Numeric coefficients such as 2x are accepted; otherwise write multiplication with *, for example 2*(x+1) or x*sin(x).") from None
+        raise InputIssue("I cannot read this notation. Use products such as 2x, 2(x+1), or x sin(x), and parentheses to make the grouping clear.") from None
     if sum(1 for _ in ast.walk(root)) > MAX_NODES:
         raise InputIssue("The 150-node expression limit is exceeded. Simplify the input.")
     if _depth(root) > MAX_DEPTH:
@@ -156,7 +160,7 @@ def parse_expression(text: str, *, allow_d: bool = False, allow_coefficients: bo
                 raise InputIssue("The supported polynomial degree limit is 12.")
             return result
         if isinstance(node, ast.Call) and not (isinstance(node.func, ast.Name) and node.func.id in ("sin", "cos", "exp", "ln", "D")):
-            raise InputIssue("This is not a supported function call. If you mean multiplication, write *, for example 2*(x+1), x*(x+1), or (x+1)*(x-1).")
+            raise InputIssue("This is not a supported function call. Use products such as 2(x+1), x(x+1), or (x+1)(x-1). Separate a variable from a named function: x sin(x).")
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and len(node.args) == 1 and not node.keywords:
             name = node.func.id
             functions = {"sin": sp.sin, "cos": sp.cos, "exp": sp.exp, "ln": sp.log}
@@ -169,7 +173,7 @@ def parse_expression(text: str, *, allow_d: bool = False, allow_coefficients: bo
                 return Expression(sp.Derivative(a.expr, X, evaluate=False), a.restrictions, True)
             restrictions = a.restrictions + ([("positive", a.expr)] if name == "ln" else [])
             return Expression(functions[name](a.expr, evaluate=False), restrictions, a.held)
-        raise InputIssue("Unsupported notation. Use x, numbers, + - * / ^, parentheses, and the listed functions.")
+        raise InputIssue("Unsupported notation. Use x, numbers, + - / ^, parentheses, ordinary products and the listed functions.")
 
     return build(root.body)
 
@@ -188,7 +192,7 @@ def derivative_label_latex(label):
     return label.replace("(x)", "'(x)") if label and label.endswith("(x)") else r"\frac{dy}{dx}"
 
 
-def question_expression(text):
+def _question_expression(text):
     if len(text) > MAX_CHARS:
         raise InputIssue("The question exceeds the 500-character limit; your text is kept.")
     stripped = text.strip()
@@ -203,6 +207,15 @@ def question_expression(text):
     parsed = parse_expression(stripped)
     parsed.function_label = label
     return parsed
+
+
+def question_expression(text, *, topic=None):
+    """Shared interpretation boundary; working-line grammar stays unchanged."""
+    from .questions import interpret_question
+    request = interpret_question(text, topic)
+    if request.issue:
+        raise InputIssue(request.issue)
+    return request.parsed
 
 
 def parse_step(text, *, expected_label=None):

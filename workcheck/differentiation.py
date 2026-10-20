@@ -17,7 +17,7 @@ def _mistake_explanation(source, candidate):
 
 def check_differentiation(question: str, lines: list[str]) -> CheckResult:
     try:
-        source = question_expression(question)
+        source = question_expression(question, topic="Differentiation")
     except InputIssue as exc:
         return CheckResult("Needs clarification", str(exc))
     if len(lines) > MAX_STEPS:

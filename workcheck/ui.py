@@ -10,6 +10,7 @@ from .worker import run_check, run_learning
 from .storage import DraftStore, SaveError, empty_draft
 from .partial_fractions import parse_partial_line
 from .presentation import school_latex, feedback_markdown
+from .questions import interpret_question
 
 
 @st.cache_data(show_spinner=False, max_entries=32)
@@ -185,7 +186,7 @@ def preview(text, *, question=False):
         return
     try:
         if question:
-            parsed = question_expression(text)
+            parsed = question_expression(text, topic=st.session_state.topic)
             label = parsed.function_label + " = " if parsed.function_label else ""
             st.latex(label + school_latex(parsed.expr))
         else:
@@ -309,8 +310,26 @@ def main():
     with st.container(border=True, key="question_panel"):
         st.markdown("**01 · Start with your question**")
         st.text_input("Question · fraction to decompose" if is_partial else "Question · expression to differentiate", key="question", on_change=invalidate,
-                      placeholder="1/((x+1)*(x+2))" if is_partial else "x^2*sin(x)")
-        st.caption("Implicit multiplication is accepted: 2x, 2(x+1), x sin(x), and (x+1)(x-1). Use * and parentheses whenever the meaning could be ambiguous.")
+                      placeholder="1/((x+1)(x+2))" if is_partial else "x^3 cos(x)")
+        request = interpret_question(st.session_state.question, st.session_state.topic)
+        signature = (st.session_state.question, st.session_state.topic)
+        if st.session_state.get("interpretation_signature") != signature:
+            st.session_state.interpretation_signature = signature
+            st.session_state.question_confirmed = False
+        if request.sentence:
+            st.markdown("**Interpreted question**")
+            if request.parsed:
+                label = request.parsed.function_label + " = " if request.parsed.function_label else ""
+                st.latex(label + school_latex(request.parsed.expr))
+            st.write("Task: " + request.task)
+            if request.issue:
+                st.warning(request.category + ": " + request.issue.removeprefix(request.category + ": "))
+            else:
+                st.caption("Confirm the expression and task before checking. This confirms the interpretation, not mathematical correctness or domain support.")
+                st.checkbox("I confirm the interpreted expression and task", key="question_confirmed", on_change=invalidate)
+        elif st.session_state.question.strip():
+            st.caption("Task: " + request.task)
+        st.caption("Use ordinary maths: 2x, x^3 cos(x), 2(x+1), and (x+1)(x-2). Use parentheses to clarify grouping; multiplication symbols are optional.")
         if not is_partial:
             st.caption("Enter an expression, y = ..., or f(x) = ..., for example f(x) = (x^2 - 5x)^3. For f(x), the derivative is shown as f'(x).")
         else:
@@ -319,13 +338,13 @@ def main():
     with st.expander("Notation and input limits"):
         if is_partial:
             st.write("Use a proper fraction with two distinct rational linear factors. Set up A/(x+1)+B/(x+2) first, then enter one identity, coefficient equation, or value per line. A and B are available in this topic's working only.")
-            for example in ("A/(x+1)+B/(x+2)", "1=A*(x+2)+B*(x+1)", "A+B=0", "2*A+B=1", "A=1", "B=-1", "1/(x+1)-1/(x+2)"):
+            for example in ("A/(x+1)+B/(x+2)", "1=A(x+2)+B(x+1)", "A+B=0", "2A+B=1", "A=1", "B=-1", "1/(x+1)-1/(x+2)"):
                 preview(example)
             st.write("Alternative method: after the setup, use x=-1: 1=A or put x=-1 on its own line before a denominator-cleared equation. Root substitution is for polynomial identities, not the original undefined fraction.")
-        st.write("Use x, numbers, + - * / ^, parentheses, sin(...), cos(...), exp(...), ln(...). Numeric coefficients and adjacent factors such as 2x, 2(x+1), x sin(x), and (x+1)(x-1) are accepted. Function names stay whole: write x*sin(x) or x sin(x), not xsin(x). Ambiguous division or exponent notation requires * and parentheses.")
+        st.write("Use x, numbers, + - / ^, parentheses, sin(...), cos(...), exp(...), ln(...). Ordinary products such as 2x, x^3 cos(x), 3x^2 sin(2x), and (x+1)(x-2) are accepted. Keep function names whole: write x sin(x), not xsin(x). Use parentheses for ambiguous division or powers. Between numbers, use parentheses or the maths symbols × and ·.")
         if not is_partial:
             st.write("Working labels: y = ... or f(x) = ... for the original function; dy/dx = ... or matching f'(x) = ... for the derivative. Single-letter labels such as g(x) also work. D(...) means an unfinished derivative with respect to x; D(original expression) = ... is supported too.")
-            preview("dy/dx = D(x^2)*sin(x) + x^2*D(sin(x))")
+            preview("dy/dx = D(x^2) sin(x) + x^2 D(sin(x))")
         st.caption(LIMITS)
         st.caption("A preview checks notation only. It does not mean the mathematics is correct. More complex domains may require clarification.")
     st.subheader("Your working · optional")
@@ -342,7 +361,7 @@ def main():
             st.markdown(f'<div class="wc-step-heading"><span class="wc-step-number">{index + 1}</span><span>Your next step</span></div>', unsafe_allow_html=True)
             st.text_input(f"Step {index + 1}", key=key, on_change=edit_line, args=(line_id,),
                           help="Start with A/(x+1)+B/(x+2), then one equation such as A+B=0 per line. See notation help for root substitutions." if is_partial else
-                          "2x means 2*x. Adjacent factors such as 2(x+1) work too. Use * and parentheses for ambiguous division or powers, e.g. 8*(2*x+3)^3.")
+                          "Use ordinary products: 2x, x^3 cos(x), 3x^2 sin(2x), or 8(2x+3)^3. Clarify ambiguous grouping with parentheses.")
             preview(line["text"])
             up, down, delete = st.columns(3)
             up.button("Move up", key="up_" + line_id, disabled=index == 0, on_click=move_line, args=(line_id, -1))
@@ -358,7 +377,8 @@ def main():
     st.caption("Edits are saved when you press Enter or leave a field. Before closing or refreshing, finish editing and look for ‘Saved on this device.’ One current draft is shared by local tabs; use one editing tab at a time.")
     if len(st.session_state.lines) > 20:
         st.warning("The 20-line checking limit is exceeded. Your lines remain intact; delete or combine lines to check them.")
-    if st.button("Check working", type="primary"):
+    needs_confirmation = request.sentence and (bool(request.issue) or not st.session_state.get("question_confirmed", False))
+    if st.button("Check working", type="primary", disabled=needs_confirmation):
         clear_learning()
         save_current()
         revision = st.session_state.revision

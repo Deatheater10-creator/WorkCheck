@@ -6,6 +6,54 @@ from streamlit.testing.v1 import AppTest
 
 
 class UITests(unittest.TestCase):
+    def test_ordinary_power_product_in_question_working_and_learning(self):
+        app = self.app()
+        app.text_input(key='question').set_value('f(x) = x^3 cos(x)').run()
+        self.click(app, 'Add step')
+        working = "f'(x)=3x^2 cos(x)-x^3 sin(x)"
+        app.text_input[1].set_value(working).run()
+        self.click(app, 'Check working')
+        self.assertEqual(app.session_state['result'].status, 'Correct final answer')
+        self.assertEqual(len(app.session_state['practice']), 3)
+        self.assertTrue(all('*' not in item.value for item in app.latex))
+        self.assertEqual(app.text_input(key='question').value, 'f(x) = x^3 cos(x)')
+        self.assertEqual(app.text_input[1].value, working)
+        self.assertEqual(len(app.exception), 0)
+
+    def test_sentence_confirmation_and_full_learning_flow(self):
+        app = self.app()
+        sentence = 'Differentiate y = x^2*sin(x).'
+        app.text_input(key='question').set_value(sentence).run()
+        check = next(button for button in app.button if button.label == 'Check working')
+        self.assertTrue(check.disabled)
+        self.assertTrue(any('first derivative' in item.value for item in app.markdown))
+        self.assertTrue(any(r'x^{2}' in item.value for item in app.latex))
+        self.click(app, 'Add step')
+        app.text_input[1].set_value('dy/dx=2*x*cos(x)').run()
+        app.checkbox(key='question_confirmed').check().run()
+        self.click(app, 'Check working')
+        self.assertEqual(app.session_state['result'].status, 'First mistake')
+        self.assertEqual(len(app.session_state['practice']), 3)
+        self.assertIsNotNone(app.session_state['learning'].example)
+        self.assertEqual(app.text_input(key='question').value, sentence)
+        app.text_input(key='question').set_value('Find the derivative of (2x+3)^4.').run()
+        self.assertFalse(app.checkbox(key='question_confirmed').value)
+        self.assertIsNone(app.session_state['result'])
+        self.assertEqual(len(app.toggle), 0)
+        app.selectbox(key='topic').select('Partial fractions').run()
+        self.assertTrue(any('Topic mismatch' in item.value for item in app.warning))
+
+    def test_complex_sentence_shows_limitation_without_answer_or_practice(self):
+        from test_questions import COMPLEX
+        app = self.app()
+        app.text_input(key='question').set_value(COMPLEX).run()
+        self.assertTrue(any('Unsupported mathematics' in item.value and 'branch' in item.value for item in app.warning))
+        self.assertTrue(any('f(x) =' in item.value for item in app.latex))
+        self.assertTrue(next(button for button in app.button if button.label == 'Check working').disabled)
+        self.assertEqual(app.session_state['practice'], [])
+        self.assertIsNone(app.session_state['result'])
+        self.assertEqual(app.text_input(key='question').value, COMPLEX)
+
     def test_teaching_order_individual_reveals_and_question_invalidation(self):
         app = self.app()
         app.text_input(key="question").set_value("x^2*sin(x)").run()
