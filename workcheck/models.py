@@ -19,6 +19,7 @@ class CheckResult:
     domain_latex: str = ""
     first_error: int | None = None
     blocked_at: int | None = None
+    derivative_label_latex: str = r"\frac{dy}{dx}"
 
 
 @dataclass

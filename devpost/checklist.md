@@ -9,7 +9,7 @@ Build mode: learn. Concise explanations before each hands-on check; wait for lea
 
 ## Slices
 
-- [ ] **1. Check differentiation working and find the first mistake**
+- [x] **1. Check differentiation working and find the first mistake**
   Becomes usable: A local editor with numbered steps, equation previews, and valid-intermediate/completed/incorrect/uncertain feedback.
   Why now: Delivers the core feature first, including setup rather than separate scaffolding.
   PRD ref: `prd.md > Typed Input`, `Differentiation Step Checking`, `Step Outcomes`
@@ -61,7 +61,9 @@ Build mode: learn. Concise explanations before each hands-on check; wait for lea
 
 ## Hands-on Checkpoints
 
-Stage 1 progress: implementation and 48 automated checks passed; loopback server launched and health endpoint returned ok. Await learner hands-on feedback before the stage-1 commit and checkbox. No stage is marked complete yet. Details: devpost/validation.md.
+Stage 1 complete: 48 automated checks passed, revised appearance passed learner hands-on review, and commit 93ba8e4 records the checkpoint. Stage 2 is in progress. Details: devpost/validation.md.
+
+Stage 2 learner review passed: learner explicitly confirmed function notation, implicit multiplication, restoration, reordering, Cancel, and confirmed clearing. Mechanical verification: 94 passing tests. Ready for the stage-2 checkpoint including parser repairs.
 
 - [x] Early usable behavior explored — learner confirmed stage 1 passed hands-on checks after the appearance revision
 - [ ] Final kick-the-tires exploration and feedback completed — after slice 5
@@ -85,5 +87,11 @@ Reflection: not yet offered; personal responses belong in ignored profile.
 Activity mode: planned live app and editor.
 
 ## Revisions
+
+- Learner reported continued rejection of ordinary implicit products. Fresh direct tests accepted both examples before this follow-up, so a live-session cause was not conclusively established. Replaced the coefficient-only regex with token-based normalization for recognized adjacent factors, added both bare-input UI/worker regressions, and restarted the app from its absolute workspace path. Preserve all pending stage-2 changes. Restoration/reset hands-on checks remain explicitly unconfirmed; stage 2 stays unchecked and uncommitted. Stage 3 has not started.
+
+- Learner requested f(x) definitions alongside y and bare expressions, including implicit coefficients. Added shared label parsing, matching prime-labelled derivative working, labelled previews/results, mismatch clarification, and regression tests. Stage-2 learner review is still pending; no mathematical topic or approved feature was deferred.
+
+- Learner reported rejection of (2x + 3)^4 during stage-2 review. Added restricted implicit numeric-coefficient multiplication for x, visible * guidance, ambiguity rejection, and parser/maths/UI regression coverage. This repairs input handling within approved chain-rule coverage; stage-2 hands-on review remains pending.
 
 - Stage-1 hands-on feedback requested a more colourful interface. Added local-only header/topic/step/button styles and tinted learning panels while preserving checking behavior. Updated PRD/spec visual direction. Examples/practice remain labelled as upcoming until their approved implementation stage. Await a second learner visual review before the stage-1 commit.

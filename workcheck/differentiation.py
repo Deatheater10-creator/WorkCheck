@@ -1,6 +1,6 @@
 import sympy as sp
 from .models import CheckResult, StepResult
-from .parser import X, MAX_STEPS, InputIssue, parse_step, question_expression
+from .parser import X, MAX_STEPS, InputIssue, derivative_label_latex, parse_step, question_expression
 from .verification import domain_of, verify
 
 
@@ -31,7 +31,9 @@ def check_differentiation(question: str, lines: list[str]) -> CheckResult:
         return CheckResult("Needs clarification", "I cannot verify this derivative's domain within the supported rules.")
     domain = domain.intersect(expected_domain)
     result = CheckResult("Solution", "No attempted working was supplied. Here is the derivative.",
-                         answer_latex=sp.latex(answer), domain_latex=sp.latex(domain))
+                         answer_latex=sp.latex(answer), domain_latex=sp.latex(domain),
+                         derivative_label_latex=derivative_label_latex(source.function_label))
+    active_label = source.function_label
     completed = False
     supplied = False
     blocked = False
@@ -43,7 +45,7 @@ def check_differentiation(question: str, lines: list[str]) -> CheckResult:
             result.steps.append(StepResult(number, text, "Not checked", "Resolve the earlier incorrect or unclear line first."))
             continue
         try:
-            role, candidate, left = parse_step(text)
+            role, candidate, left = parse_step(text, expected_label=active_label)
             if role == "derivative_equality":
                 # The equality must refer to the original derivative, not an unrelated subproblem.
                 from .parser import Expression
@@ -52,7 +54,7 @@ def check_differentiation(question: str, lines: list[str]) -> CheckResult:
                     raise InputIssue("The D(...) on the left must refer to the original function. Clarify the line's role.")
                 candidate.restrictions += left.restrictions
             if role == "function" and candidate.held:
-                raise InputIssue("A y = line should state the original function, not its derivative. Use dy/dx = for derivative working.")
+                raise InputIssue("A function-definition line should state the original function, not its derivative. Use dy/dx = or the matching f'(x) = label for derivative working.")
             proof = verify(candidate, source.expr.doit() if role == "function" else answer, domain)
             if proof.status == "unknown":
                 raise InputIssue(proof.reason)
@@ -72,6 +74,8 @@ def check_differentiation(question: str, lines: list[str]) -> CheckResult:
             result.explanation = f"Line {number}: {reason}"
             blocked = True
         else:
+            if candidate.function_label and candidate.function_label != "y" and active_label in (None, "y"):
+                active_label = candidate.function_label
             complete = role != "function" and not candidate.held
             completed = completed or complete
             label = "Correct final answer" if complete else "Valid intermediate step"

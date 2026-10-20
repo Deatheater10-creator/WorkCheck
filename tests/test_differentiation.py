@@ -1,8 +1,74 @@
 import unittest
+import sympy as sp
+from workcheck.parser import X, question_expression
 from workcheck.checking import check_differentiation as check
 
 
 class DifferentiationTests(unittest.TestCase):
+    def test_both_reported_bare_inputs_match_explicit_products(self):
+        examples = [
+            ("(2x + 3)^4", "(2*x + 3)^4", "8*(2*x+3)^3"),
+            ("(x^2 - 5x)^3", "(x^2 - 5*x)^3", "3*(x^2-5*x)^2*(2*x-5)"),
+        ]
+        for implicit, explicit, answer in examples:
+            with self.subTest(question=implicit):
+                self.assertEqual(check(implicit, []).answer_latex, check(explicit, []).answer_latex)
+                result = check(implicit, ["y=" + implicit, "dy/dx=" + answer])
+                self.assertEqual(result.status, "Correct final answer")
+                self.assertEqual(result.steps[0].status, "Valid intermediate step")
+                self.assertEqual(check(implicit, ["dy/dx=D("+implicit+")"]).status, "Valid working — incomplete")
+    def test_function_definition_solver_label_and_exact_answer(self):
+        for question, expected, label in [
+            ("f(x) = (2x + 3)^4", 8*(2*X+3)**3, "f'(x)"),
+            ("f(x) = (x^2 - 5x)^3", 3*(X**2-5*X)**2*(2*X-5), "f'(x)"),
+            ("y = (x^2 - 5x)^3", 3*(X**2-5*X)**2*(2*X-5), r"\frac{dy}{dx}"),
+            ("(x^2 - 5x)^3", 3*(X**2-5*X)**2*(2*X-5), r"\frac{dy}{dx}"),
+        ]:
+            with self.subTest(question=question):
+                result = check(question, [])
+                source = question_expression(question)
+                self.assertEqual(sp.simplify(sp.diff(source.expr.doit(), X) - expected), 0)
+                self.assertEqual(result.status, "Solution")
+                self.assertTrue(result.answer_latex)
+                self.assertEqual(check(question, [sp.sstr(expected)]).status, "Correct final answer")
+                self.assertEqual(result.derivative_label_latex, label)
+
+    def test_named_function_intermediate_and_completed_steps(self):
+        question = "f(x) = (x^2-5x)^3"
+        lines = ["f(x) = (x^2-5x)^3", "f'(x) = 3*(x^2-5x)^2*D(x^2-5x)",
+                 "f'(x) = 3*(x^2-5x)^2*(2x-5)"]
+        result = check(question, lines)
+        self.assertEqual(result.status, "Correct final answer")
+        self.assertEqual([step.complete for step in result.steps], [False, False, True])
+        self.assertEqual(check(question, lines[:2]).status, "Valid working — incomplete")
+
+    def test_named_function_first_error_and_label_uncertainty(self):
+        result = check("f(x)=(2x+3)^4", ["f(x)=(2x+3)^4", "f'(x)=4*(2x+3)^3", "f'(x)=8*(2x+3)^3"])
+        self.assertEqual(result.first_error, 2)
+        self.assertEqual(result.steps[2].status, "Not checked")
+        result = check("f(x)=x^2", ["g'(x)=2x", "f'(x)=3x"])
+        self.assertEqual(result.status, "Needs clarification")
+        self.assertEqual(result.blocked_at, 1)
+        self.assertIsNone(result.first_error)
+
+    def test_named_labels_do_not_weaken_verification(self):
+        self.assertEqual(check("f(x)=x^2", ["f(x)=x^3"]).first_error, 1)
+        self.assertEqual(check("f(x)=x^2", ["f(x)=D(x^2)"]).status, "Needs clarification")
+        self.assertEqual(check("f(x)=x^2", ["dy/dx=2x"]).status, "Correct final answer")
+        self.assertEqual(check("x^2", ["f(x)=x^2", "f'(x)=2x"]).status, "Correct final answer")
+        self.assertEqual(check("f(x)=x^2", ["D(x^2)=2x"]).status, "Correct final answer")
+
+    def test_linear_inner_chain_rule_with_implicit_coefficient(self):
+        expected = 8*(2*X+3)**3
+        source = question_expression("(2x + 3)^4")
+        self.assertEqual(sp.simplify(sp.diff(source.expr.doit(), X) - expected), 0)
+        result = check("(2x + 3)^4", ["y=(2x+3)^4", "dy/dx=8*(2*x+3)^3"])
+        self.assertEqual(result.status, "Correct final answer")
+        self.assertEqual(result.answer_latex, sp.latex(expected))
+        self.assertEqual(check("(2x+3)^4", ["4*(2x+3)^3"]).status, "First mistake")
+        self.assertEqual(check("(2x+3)^4", ["4*(2x+3)^3*D(2x+3)"]).status,
+                         "Valid working — incomplete")
+
     def test_five_prd_examples(self):
         examples = [
             ("x^2*(x+1)", "3*x^2+2*x"),
@@ -60,7 +126,7 @@ class DifferentiationTests(unittest.TestCase):
         self.assertEqual(r.steps[1].status, "Not checked")
 
     def test_unclear_earlier_line_blocks_error(self):
-        r = check("x^2", ["f'(x) = 2*x", "3*x"])
+        r = check("x^2", ["f''(x) = 2*x", "3*x"])
         self.assertEqual(r.status, "Needs clarification")
         self.assertIsNone(r.first_error)
         self.assertEqual(r.blocked_at, 1)

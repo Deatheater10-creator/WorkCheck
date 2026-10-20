@@ -6,8 +6,86 @@ from html import escape
 import streamlit as st
 import sympy as sp
 
-from .parser import LIMITS, InputIssue, parse_step, question_expression
+from .parser import LIMITS, InputIssue, derivative_label_latex, parse_step, question_expression
 from .worker import run_check
+from .storage import DraftStore, SaveError, empty_draft
+
+
+def save_current():
+    # Read the latest widget values before structural edits/check/reset callbacks.
+    for line in st.session_state.lines:
+        line["text"] = st.session_state.get("line_" + line["id"], line["text"])
+    draft = {"schema_version": 1, "topic": st.session_state.topic,
+             "question": st.session_state.question, "lines": st.session_state.lines,
+             "revision": st.session_state.revision}
+    try:
+        st.session_state.draft_store.save(draft)
+        st.session_state.save_message = "Saved on this device."
+        st.session_state.save_failed = False
+        st.session_state.recovery_warning = ""
+        return True
+    except SaveError as exc:
+        st.session_state.save_message = str(exc) + " Your current working is kept in memory."
+        st.session_state.save_failed = True
+        return False
+
+
+def initialize_draft():
+    if st.session_state.get("draft_initialized"):
+        return
+    st.session_state.draft_store = DraftStore()
+    loaded = st.session_state.draft_store.load()
+    # Preserve live stage-1 working when this update is loaded in an existing tab.
+    has_live_work = bool(st.session_state.question.strip() or st.session_state.lines)
+    if not has_live_work:
+        draft = loaded.draft
+        st.session_state.question = draft["question"]
+        st.session_state.topic = draft["topic"]
+        st.session_state.lines = draft["lines"]
+        st.session_state.revision = draft["revision"]
+    st.session_state.save_message = loaded.message
+    st.session_state.save_failed = False
+    st.session_state.recovery_warning = loaded.message if loaded.warning else ""
+    st.session_state.confirm_new_question = False
+    st.session_state.draft_initialized = True
+    if has_live_work:
+        save_current()
+
+
+def request_new_question():
+    if st.session_state.question.strip() or any(line["text"].strip() for line in st.session_state.lines):
+        st.session_state.confirm_new_question = True
+    else:
+        confirm_new_question()
+
+
+def cancel_new_question():
+    st.session_state.confirm_new_question = False
+
+
+def confirm_new_question():
+    draft = empty_draft()
+    draft["revision"] = st.session_state.revision + 1
+    try:
+        # Save first. If this fails, preserve the visible working and old saved draft.
+        st.session_state.draft_store.save(draft)
+    except SaveError as exc:
+        st.session_state.save_message = f"Could not start a new question: {exc} Your working has not been cleared."
+        st.session_state.save_failed = True
+        return
+    for line in st.session_state.lines:
+        st.session_state.pop("line_" + line["id"], None)
+    st.session_state.question = draft["question"]
+    st.session_state.topic = draft["topic"]
+    st.session_state.lines = []
+    st.session_state.revision = draft["revision"]
+    st.session_state.result = None
+    st.session_state.result_revision = None
+    st.session_state.practice = []
+    st.session_state.confirm_new_question = False
+    st.session_state.recovery_warning = ""
+    st.session_state.save_message = "New question started. The previous saved working has been cleared."
+    st.session_state.save_failed = False
 
 
 def invalidate():
@@ -15,6 +93,8 @@ def invalidate():
     st.session_state.result = None
     st.session_state.result_revision = None
     st.session_state.practice = []
+    if st.session_state.get("draft_initialized"):
+        save_current()
 
 
 def edit_line(line_id):
@@ -49,15 +129,21 @@ def preview(text, *, question=False):
     try:
         if question:
             parsed = question_expression(text)
-            st.latex(sp.latex(parsed.expr))
+            label = parsed.function_label + " = " if parsed.function_label else ""
+            st.latex(label + sp.latex(parsed.expr))
         else:
-            role, parsed, left = parse_step(text)
+            source_label = None
+            try:
+                source_label = question_expression(st.session_state.question).function_label
+            except InputIssue:
+                pass
+            role, parsed, left = parse_step(text, expected_label=source_label)
             if role == "function":
-                label = "y = "
+                label = parsed.function_label + " = "
             elif left is not None:
                 label = sp.latex(left.expr) + " = "
             else:
-                label = r"\frac{dy}{dx} = "
+                label = derivative_label_latex(parsed.function_label or source_label) + " = "
             st.latex(label + sp.latex(parsed.expr))
     except InputIssue as exc:
         st.caption(f"Preview unavailable: {exc}")
@@ -97,7 +183,7 @@ def show_result(result):
     if result.answer_latex:
         with st.container(border=True, key="answer_panel"):
             st.subheader("Final answer")
-            st.latex(r"\frac{dy}{dx} = " + result.answer_latex)
+            st.latex(result.derivative_label_latex + " = " + result.answer_latex)
             st.caption("Retain the original real-domain restrictions:")
             st.latex(r"x \in " + result.domain_latex)
 
@@ -111,6 +197,7 @@ def main():
     for key, value in defaults.items():
         if key not in st.session_state:
             st.session_state[key] = value
+    initialize_draft()
     st.markdown('''<header class="wc-hero">
       <div class="wc-eyebrow">YOUR MATHS STUDY WORKSPACE</div>
       <h1>WorkCheck</h1><p>Understand your working.<br>Build confidence, one step at a time.</p>
@@ -125,16 +212,29 @@ def main():
       <section class="wc-topic wc-topic-amber"><span class="wc-topic-symbol" aria-hidden="true">A / (x+a)</span>
       <strong>Partial fractions</strong><p>Follow the decomposition and coefficient equations.</p><span class="wc-topic-badge">COMING IN A LATER BUILD STAGE</span></section>
     </div>''', unsafe_allow_html=True)
-    st.caption("Stage 1 · Local differentiation checker. Draft saving, partial fractions, teaching examples and practice arrive in later stages. Photo recognition is not enabled.")
-    st.selectbox("Topic", ["Differentiation"], key="topic", on_change=invalidate)
+    st.caption("Local differentiation checker · Your draft stays on this device. Partial fractions, teaching examples and practice arrive in later stages. Photo recognition is not enabled.")
+    if st.session_state.recovery_warning:
+        st.warning(st.session_state.recovery_warning)
+    st.button("New question", on_click=request_new_question)
+    if st.session_state.confirm_new_question:
+        with st.container(border=True):
+            st.warning("Start a new question? This will clear the current question and working from this screen and the saved draft.")
+            confirm, cancel = st.columns(2)
+            confirm.button("Clear question and working", on_click=confirm_new_question)
+            cancel.button("Cancel", on_click=cancel_new_question)
+    st.selectbox("Topic", ["Differentiation", "Partial fractions"], key="topic", on_change=invalidate)
+    if st.session_state.topic != "Differentiation":
+        st.info("Partial-fraction checking arrives in stage 3. This draft can be saved, but checking is not enabled for this topic yet.")
     with st.container(border=True, key="question_panel"):
         st.markdown("**01 · Start with your question**")
         st.text_input("Question · expression to differentiate", key="question", on_change=invalidate,
                       placeholder="x^2*sin(x)")
+        st.caption("Implicit multiplication is accepted: 2x, 2(x+1), x sin(x), and (x+1)(x-1). Use * and parentheses whenever the meaning could be ambiguous.")
+        st.caption("Enter an expression, y = ..., or f(x) = ..., for example f(x) = (x^2 - 5x)^3. For f(x), the derivative is shown as f'(x).")
         preview(st.session_state.question, question=True)
     with st.expander("Notation and input limits"):
-        st.write("Use x, numbers, + - * / ^, parentheses, sin(...), cos(...), exp(...), ln(...). Use explicit multiplication, for example x^2*sin(x).")
-        st.write("Working labels: y = ..., dy/dx = ..., or D(original expression) = ... . D(...) means an unfinished derivative with respect to x.")
+        st.write("Use x, numbers, + - * / ^, parentheses, sin(...), cos(...), exp(...), ln(...). Numeric coefficients and adjacent factors such as 2x, 2(x+1), x sin(x), and (x+1)(x-1) are accepted. Function names stay whole: write x*sin(x) or x sin(x), not xsin(x). Ambiguous division or exponent notation requires * and parentheses.")
+        st.write("Working labels: y = ... or f(x) = ... for the original function; dy/dx = ... or matching f'(x) = ... for the derivative. Single-letter labels such as g(x) also work. D(...) means an unfinished derivative with respect to x; D(original expression) = ... is supported too.")
         st.code("dy/dx = D(x^2)*sin(x) + x^2*D(sin(x))", language=None)
         st.caption(LIMITS)
         st.caption("A preview checks notation only. It does not mean the mathematics is correct. More complex domains may require clarification.")
@@ -149,7 +249,8 @@ def main():
             st.session_state[key] = line["text"]
         with st.container(border=True, key="editor_" + line_id):
             st.markdown(f'<div class="wc-step-heading"><span class="wc-step-number">{index + 1}</span><span>Your next step</span></div>', unsafe_allow_html=True)
-            st.text_input(f"Step {index + 1}", key=key, on_change=edit_line, args=(line_id,))
+            st.text_input(f"Step {index + 1}", key=key, on_change=edit_line, args=(line_id,),
+                          help="2x means 2*x. Adjacent factors such as 2(x+1) work too. Use * and parentheses for ambiguous division or powers, e.g. 8*(2*x+3)^3.")
             preview(line["text"])
             up, down, delete = st.columns(3)
             up.button("Move up", key="up_" + line_id, disabled=index == 0, on_click=move_line, args=(line_id, -1))
@@ -157,9 +258,16 @@ def main():
                         on_click=move_line, args=(line_id, 1))
             delete.button("Delete", key="delete_" + line_id, on_click=delete_line, args=(line_id,))
     st.button("Add step", on_click=add_line)
+    if st.session_state.save_failed:
+        st.warning(st.session_state.save_message)
+        st.button("Retry saving", on_click=save_current)
+    else:
+        st.caption(st.session_state.save_message)
+    st.caption("Edits are saved when you press Enter or leave a field. Before closing or refreshing, finish editing and look for ‘Saved on this device.’ One current draft is shared by local tabs; use one editing tab at a time.")
     if len(st.session_state.lines) > 20:
         st.warning("The 20-line checking limit is exceeded. Your lines remain intact; delete or combine lines to check them.")
-    if st.button("Check working", type="primary"):
+    if st.button("Check working", type="primary", disabled=st.session_state.topic != "Differentiation"):
+        save_current()
         revision = st.session_state.revision
         question = st.session_state.question
         lines = [line["text"] for line in st.session_state.lines]

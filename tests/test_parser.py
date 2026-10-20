@@ -4,6 +4,65 @@ from workcheck.parser import X, InputIssue, parse_expression, parse_step, questi
 
 
 class ParserTests(unittest.TestCase):
+    def test_labelled_questions_with_implicit_multiplication(self):
+        for text, label, expected in [
+            ("f(x) = (2x + 3)^4", "f(x)", (2*X+3)**4),
+            ("f(x) = (x^2 - 5x)^3", "f(x)", (X**2-5*X)**3),
+            ("y = (x^2 - 5x)^3", "y", (X**2-5*X)**3),
+            ("g ( x ) = 2x", "g(x)", 2*X),
+            ("(x^2 - 5x)^3", None, (X**2-5*X)**3),
+        ]:
+            with self.subTest(text=text):
+                parsed = question_expression(text)
+                self.assertEqual(parsed.function_label, label)
+                self.assertEqual(sp.simplify(parsed.expr - expected), 0)
+
+    def test_function_and_derivative_working_roles(self):
+        role, parsed, _ = parse_step("f(x) = (x^2-5x)^3", expected_label="f(x)")
+        self.assertEqual(role, "function")
+        self.assertEqual(parsed.function_label, "f(x)")
+        for text in ["f'(x) = 2x", "f′(x) = 2x", "f ' ( x ) = 2x"]:
+            role, parsed, _ = parse_step(text, expected_label="f(x)")
+            self.assertEqual(role, "derivative")
+            self.assertEqual(parsed.function_label, "f(x)")
+
+    def test_wrong_or_unsupported_labels_request_clarification(self):
+        for text in ["f(x,y)=x", "f(t)=t", "x(x)=x", "f(x)=x=2", "f'(x)=x"]:
+            with self.subTest(text=text), self.assertRaises(InputIssue):
+                question_expression(text)
+        for text in ["g'(x)=2x", "g(x)=x^2", "f''(x)=2"]:
+            with self.subTest(text=text), self.assertRaises(InputIssue):
+                parse_step(text, expected_label="f(x)")
+
+    def test_unambiguous_numeric_coefficients(self):
+        for text, expected in [("2x", 2*X), ("-3x", -3*X), ("0.5x", X/2),
+                               (".5x", X/2), ("2 x", 2*X), ("(2x + 3)^4", (2*X+3)**4)]:
+            with self.subTest(text=text):
+                self.assertEqual(sp.simplify(parse_expression(text).expr - expected), 0)
+
+    def test_coefficients_do_not_split_names_or_guess_exponents(self):
+        for text in ["2xyz", "1e2x", "x^2x", "x^ 2x", "x^-2x", "x^+2x", "1/2x", "1/-2x", "x1", "0xff"]:
+            with self.subTest(text=text), self.assertRaises(InputIssue):
+                parse_expression(text)
+
+    def test_explicit_denominator_grouping_preserved(self):
+        p = parse_expression("1/(2x)")
+        self.assertEqual(sp.simplify(p.expr - 1/(2*X)), 0)
+
+    def test_adjacent_factors_and_function_arguments(self):
+        for text, expected in [("2(x+1)", 2*(X+1)), ("x(x+1)", X*(X+1)),
+                               ("(x+1)(x-1)", (X+1)*(X-1)), ("x sin(x)", X*sp.sin(X)),
+                               ("2sin(x)", 2*sp.sin(X)), ("sin(2x)", sp.sin(2*X)),
+                               ("D(2x)", 2)]:
+            with self.subTest(text=text):
+                parsed = parse_expression(text, allow_d=True)
+                self.assertEqual(sp.simplify(parsed.expr.doit()-expected), 0)
+
+    def test_names_and_adjacent_numbers_are_not_guessed(self):
+        for text in ["xsin(x)", "2abc", "2 3", "02x", "x\nx"]:
+            with self.subTest(text=text), self.assertRaises(InputIssue):
+                parse_expression(text)
+
     def test_exact_decimal(self):
         self.assertEqual(parse_expression("0.1").expr, sp.Rational(1, 10))
 

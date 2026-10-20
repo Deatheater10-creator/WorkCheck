@@ -1,6 +1,8 @@
 """Translate a small maths grammar into SymPy objects, without eval."""
 import ast
 import re
+import io
+import tokenize
 from dataclasses import dataclass, field
 
 import sympy as sp
@@ -28,10 +30,56 @@ class Expression:
     restrictions: list[tuple[str, sp.Expr]] = field(default_factory=list)
     held: bool = False
     degree: int | None = None
+    function_label: str | None = None
 
 
 def _depth(node):
     return 1 + max((_depth(c) for c in ast.iter_child_nodes(node)), default=0)
+
+
+def _normalize_multiplication(source):
+    """Insert products at known token boundaries, never inside identifiers.
+
+    Python's tokenizer only identifies tokens; it does not execute the input.
+    The existing restricted AST builder still checks all syntax and limits.
+    """
+    hint = "Use * and parentheses to clarify, for example 2*(x+1) or x*sin(x)."
+    try:
+        raw = list(tokenize.generate_tokens(io.StringIO(source).readline))
+    except (tokenize.TokenError, IndentationError, SyntaxError):
+        raise InputIssue("I cannot read this notation. " + hint) from None
+    tokens = [t for t in raw if t.type not in (tokenize.NL, tokenize.NEWLINE, tokenize.ENDMARKER)]
+    if any(t.type == tokenize.NEWLINE and any(u.start > t.end and u.type not in
+           (tokenize.NL, tokenize.NEWLINE, tokenize.ENDMARKER) for u in raw) for t in raw):
+        raise InputIssue("Enter one expression per field or numbered line.")
+    functions = {"sin", "cos", "exp", "ln", "D"}
+    for token in tokens:
+        if token.type == tokenize.NAME and token.string not in functions | {"x"}:
+            raise InputIssue("Unsupported name. Use x and the listed functions; names are not split into products. " + hint)
+        if token.type == tokenize.NUMBER and not re.fullmatch(r"(?:\d+(?:\.\d*)?|\.\d+)", token.string):
+            raise InputIssue("Use ordinary numbers, not scientific or special literals.")
+        if token.type not in (tokenize.NAME, tokenize.NUMBER, tokenize.OP) or (
+            token.type == tokenize.OP and token.string not in {"+", "-", "*", "/", "**", "(", ")"}
+        ):
+            raise InputIssue("Unsupported notation. " + hint)
+    output = []
+    for i, token in enumerate(tokens):
+        if i:
+            previous = tokens[i-1]
+            ends_factor = previous.type == tokenize.NUMBER or previous.string in {"x", ")"}
+            starts_factor = token.type in (tokenize.NUMBER, tokenize.NAME) or token.string == "("
+            if ends_factor and starts_factor:
+                if previous.type == token.type == tokenize.NUMBER:
+                    raise InputIssue("Two adjacent numbers are ambiguous. Put * between numbers you want to multiply.")
+                # Do not guess 1/2x, x^2x, or their signed variants.
+                before = i-2
+                if before >= 0 and tokens[before].string in {"+", "-"}:
+                    before -= 1
+                if before >= 0 and tokens[before].string in {"/", "**"}:
+                    raise InputIssue("Ambiguous multiplication after division or a power. Write 1/(2*x), (1/2)*x, or (x^2)*x as intended.")
+                output.append((tokenize.OP, "*"))
+        output.append((token.type, token.string))
+    return tokenize.untokenize(output)
 
 
 def parse_expression(text: str, *, allow_d: bool = False) -> Expression:
@@ -40,10 +88,11 @@ def parse_expression(text: str, *, allow_d: bool = False) -> Expression:
     source = text.strip().replace("^", "**")
     if not source:
         raise InputIssue("Enter a mathematical expression.")
+    source = _normalize_multiplication(source)
     try:
         root = ast.parse(source, mode="eval")
     except (SyntaxError, ValueError, RecursionError):
-        raise InputIssue("I cannot read this notation. Use explicit * and parentheses.") from None
+        raise InputIssue("I cannot read this notation. Numeric coefficients such as 2x are accepted; otherwise write multiplication with *, for example 2*(x+1) or x*sin(x).") from None
     if sum(1 for _ in ast.walk(root)) > MAX_NODES:
         raise InputIssue("The 150-node expression limit is exceeded. Simplify the input.")
     if _depth(root) > MAX_DEPTH:
@@ -102,6 +151,8 @@ def parse_expression(text: str, *, allow_d: bool = False) -> Expression:
             if result.degree is not None and result.degree > 12:
                 raise InputIssue("The supported polynomial degree limit is 12.")
             return result
+        if isinstance(node, ast.Call) and not (isinstance(node.func, ast.Name) and node.func.id in ("sin", "cos", "exp", "ln", "D")):
+            raise InputIssue("This is not a supported function call. If you mean multiplication, write *, for example 2*(x+1), x*(x+1), or (x+1)*(x-1).")
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and len(node.args) == 1 and not node.keywords:
             name = node.func.id
             functions = {"sin": sp.sin, "cos": sp.cos, "exp": sp.exp, "ln": sp.log}
@@ -119,16 +170,38 @@ def parse_expression(text: str, *, allow_d: bool = False) -> Expression:
     return build(root.body)
 
 
+def function_label(text):
+    """Recognize a label, not an executable function or a second variable."""
+    text = re.sub(r"\s", "", text)
+    if text == "y":
+        return "y"
+    if re.fullmatch(r"[A-Za-z]\(x\)", text) and text[0] not in ("D", "x"):
+        return text
+    return None
+
+
+def derivative_label_latex(label):
+    return label.replace("(x)", "'(x)") if label and label.endswith("(x)") else r"\frac{dy}{dx}"
+
+
 def question_expression(text):
     if len(text) > MAX_CHARS:
         raise InputIssue("The question exceeds the 500-character limit; your text is kept.")
     stripped = text.strip()
-    if re.match(r"^y\s*=", stripped):
-        stripped = stripped.split("=", 1)[1]
-    return parse_expression(stripped)
+    label = None
+    if "=" in stripped:
+        if stripped.count("=") != 1:
+            raise InputIssue("Use one function definition, for example f(x) = (2x+3)^4.")
+        left, stripped = (part.strip() for part in stripped.split("=", 1))
+        label = function_label(left)
+        if label is None:
+            raise InputIssue("Use a bare expression, y = ..., or a single-letter function label such as f(x) = ... .")
+    parsed = parse_expression(stripped)
+    parsed.function_label = label
+    return parsed
 
 
-def parse_step(text):
+def parse_step(text, *, expected_label=None):
     if len(text) > MAX_CHARS:
         raise InputIssue("This line exceeds the 500-character limit; your text is kept.")
     if text.count("=") > 1:
@@ -137,11 +210,22 @@ def parse_step(text):
         return "derivative", parse_expression(text, allow_d=True), None
     left, right = (part.strip() for part in text.split("=", 1))
     rhs = parse_expression(right, allow_d=True)
-    if left == "y":
+    label = function_label(left)
+    if label:
+        if label != "y" and expected_label not in (None, "y", label):
+            raise InputIssue(f"This line names {label}, but the current function is {expected_label}. Please clarify the label.")
+        rhs.function_label = label
         return "function", rhs, None
     if re.sub(r"\s", "", left) == "dy/dx":
+        return "derivative", rhs, None
+    prime = re.fullmatch(r"([A-Za-z])\s*['′]\s*\(\s*x\s*\)", left)
+    if prime and prime.group(1) not in ("D", "x"):
+        label = prime.group(1) + "(x)"
+        if expected_label not in (None, "y", label):
+            raise InputIssue(f"This derivative names {label}, but the current function is {expected_label}. Please clarify the label.")
+        rhs.function_label = label
         return "derivative", rhs, None
     lhs = parse_expression(left, allow_d=True)
     if isinstance(lhs.expr, sp.Derivative) and not lhs.expr.expr.has(sp.Derivative):
         return "derivative_equality", rhs, lhs
-    raise InputIssue("Label this line y = ..., dy/dx = ..., or D(original expression) = ... .")
+    raise InputIssue("Label this line y = ..., f(x) = ..., dy/dx = ..., f'(x) = ..., or D(original expression) = ... .")
