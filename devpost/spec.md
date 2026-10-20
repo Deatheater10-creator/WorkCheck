@@ -92,9 +92,13 @@ Partial fractions: validate proper rational input whose denominator has exactly 
 
 Feasibility evidence still needed: during build, run the PRD's complete coefficient example, swapped labels, root substitution, valid incomplete working, wrong constraint, and unresolved context before claiming this checker works. If those cannot be supported reliably, bring a concrete partial-fraction deferral proposal to the learner; no automatic scope reduction.
 
+Stage-3 implementation: coefficient names A/B are enabled only in the partial-fraction working grammar. Derive the exact linear system from the student's two-term setup and original fraction. Check polynomial identities and linear constraints by exact augmented-row-space containment, not text comparison or numerical samples. Retain domain restrictions and reject unsupported variable-denominator equations with clarification. Root syntax is x=-1: 1=A, or a separate x=-1 marker followed by a denominator-cleared identity. Partial coefficient substitution remains intermediate; only an equivalent resolved two-term simple-fraction sum is complete. Support a final equality in either direction. UI topic dispatch selects the corresponding local worker checker and displays a decomposition without a derivative label. No approved topic was deferred.
+
 ### Explanations and Worked Examples
 Implements `prd.md > Explanation and Practice`.
 Use authored, local rule explanations and structured worked-example templates, parameterized by parsed expressions. Recognize a misconception only when a rule supports it (for example, a claimed derivative equal to u'*v' instead of u'*v+u*v'). Otherwise explain the verified mismatch without inventing the student's reasoning. Begin with the first mistake when present. For valid unfinished work, explain what remains; for uncertainty explain the limitation first. Verify displayed mathematical transformations, not just final expressions.
+
+Learner-authorized stage-3 presentation refinement: workcheck/presentation.py supplies a LaTeX printer with stable positive-before-negative additive ordering, removal of redundant unit multipliers in previews, exact compact finite domain exclusions, and inequalities for simple intervals. It attaches display-only metadata and the verified six-part coefficient-method solution to results without modifying checker statuses, raw answers, domains, or step records. Recompute display values only when their canonical raw answer/domain match those already returned by the checker. Verify the generated coefficient system, solved constants, cleared identity, and final sum before display. The worker sends the checked result before preparing presentation; rendering failure or deadline returns that checked result with a note rather than changing its mathematical verdict. Broader fresh teaching examples and practice remain stage-4 work.
 
 ### Practice Generator and Solution Verifier
 Implements `prd.md > Explanation and Practice` and `Acceptance Evidence`.
@@ -139,6 +143,7 @@ WorkCheck/
     differentiation.py        # derivative role checks and rule forms
     partial_fractions.py      # coefficient context and step checks
     explanations.py           # local concept text and worked examples
+    presentation.py           # school-style answer/domain display and coefficient method
     practice.py               # three verified items and fallback bank
     storage.py                # validated JSON load/save/recovery
     worker.py                 # bounded local maths jobs
@@ -149,6 +154,7 @@ WorkCheck/
     test_partial_fractions.py
     test_checking.py
     test_practice.py
+    test_presentation.py
     test_storage.py
   .streamlit/config.toml      # local bind, no telemetry, palette
   requirements.txt           # pinned direct runtime dependencies
@@ -211,3 +217,8 @@ On question, topic, or working edits, clear or visibly invalidate all prior feed
 
 ### Nondestructive Input Limits
 Show the configured limits in plain language beside the input/help controls. If exceeded, retain and locally save raw input without truncation, identify the exceeded limit, and suspend affected checking/previews until corrected. Computational limits must not be destructive storage or edit limits. Test over-limit draft round trips, clear feedback, and resumption after correction. Handle oversized/damaged save files with a recovery message and preserve recoverable originals.
+
+
+Worked-solution refinement: render actual mathematical equations with a short explanation beside every transformation. Partial fractions include expansion, collection, coefficient comparison, elimination, back-substitution, and the original-to-final equality using the question's actual coefficients. Differentiation shows explicit derivative transformations for the supported sum, product, integer power, chain, sine, cosine, exponential, and logarithm rules. Verify generated transformations symbolically before display; never change the working checker's acceptance rules. Stage 3 was accepted by the learner after review.
+
+- Presentation review: use structural SymPy LaTeX rendering for submitted lines in feedback cards and notation examples, as well as question/step previews, generated working and answers. Symbolic factors use juxtaposition; adjacent numeric factors retain a multiplication dot. Render authored product-rule feedback as inline maths. Keep raw editable input, input-syntax instructions, stored drafts, parser and checking rules unchanged. Unsupported notation receives a preview-unavailable message rather than a guessed rendering. Stage 3 was accepted by the learner after review.

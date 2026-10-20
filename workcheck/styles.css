@@ -71,6 +71,7 @@
 .stApp button:focus-visible, .stApp input:focus-visible { outline: 3px solid #4383d8; outline-offset: 3px; }
 .st-key-explanation_panel { background: #edf5ff; border: 1px solid #c7dcfa !important; border-radius: 16px !important; }
 .st-key-answer_panel { background: #eff9f8; border: 1px solid #bfdfdc !important; border-radius: 16px !important; }
+.st-key-worked_solution_panel { background: #f4efff; border: 1px solid #ded0ff !important; border-radius: 16px !important; }
 .wc-learning-panels { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; margin-top: 1.4rem; }
 .wc-learning-panel { padding: 1.2rem; border-radius: 16px; border: 1px solid; }
 .wc-learning-panel h3 { font-size: 1rem; margin: .5rem 0; }

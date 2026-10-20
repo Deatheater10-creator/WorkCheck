@@ -6,6 +6,48 @@ from streamlit.testing.v1 import AppTest
 
 
 class UITests(unittest.TestCase):
+    def test_feedback_uses_rendered_submitted_maths_in_both_topics(self):
+        app = self.app()
+        for topic, question, working in [
+            ("Differentiation", "x**2*sin(x)", "dy/dx=2*x*cos(x)"),
+            ("Partial fractions", "1/((x+1)*(x+2))", "A/(x+1)+B/(x+2)"),
+        ]:
+            with self.subTest(topic=topic):
+                app.selectbox(key="topic").select(topic).run()
+                app.text_input(key="question").set_value(question).run()
+                if not app.session_state["lines"]:
+                    self.click(app, "Add step")
+                app.text_input[1].set_value(working).run()
+                self.click(app, "Check working")
+                self.assertEqual(len(app.code), 0)
+                self.assertTrue(all("*" not in item.value for item in app.latex))
+                self.assertTrue(any(r"\frac" in item.value for item in app.latex))
+                self.assertEqual(app.text_input[1].value, working)
+                self.assertEqual(app.session_state["result"].steps[0].text, working)
+                self.assertEqual(len(app.exception), 0)
+
+    def test_numeric_multiplication_preview_keeps_visible_separator(self):
+        app = self.app()
+        app.text_input(key="question").set_value("2*3*x").run()
+        self.assertTrue(any(r"2 \cdot 3 x" in item.value for item in app.latex))
+        self.assertEqual(app.text_input(key="question").value, "2*3*x")
+
+    def test_school_style_partial_answer_and_six_worked_steps(self):
+        app = self.app()
+        app.selectbox(key="topic").select("Partial fractions").run()
+        app.text_input(key="question").set_value("1/((x+1)*(x+2))").run()
+        self.click(app, "Check working")
+        self.assertEqual(app.session_state["result"].status, "Solution")
+        equations = [item.value for item in app.latex]
+        self.assertTrue(any(r"\frac{1}{x + 1} - \frac{1}{x + 2}" in equation for equation in equations))
+        self.assertTrue(any(r"x \ne -1,\; -2" in equation for equation in equations))
+        self.assertFalse(any(r"\cup" in equation for equation in equations))
+        self.assertEqual(len(app.session_state["result"].worked_solution), 6)
+        self.assertTrue(any("Compare coefficients" in item.value for item in app.markdown))
+        app.text_input(key="question").set_value("2/((x+1)*(x+2))").run()
+        self.assertIsNone(app.session_state["result"])
+        self.assertFalse(any("Compare coefficients" in item.value for item in app.markdown))
+        self.assertEqual(len(app.exception), 0)
     def test_both_reported_bare_inputs_through_live_editor_path(self):
         app = self.app()
         self.click(app, "Add step")
@@ -150,12 +192,34 @@ class UITests(unittest.TestCase):
         self.assertEqual(restored.text_input(key="question").value, text)
         self.assertEqual(restored.text_input[1].value, text)
 
-    def test_topic_restores_and_does_not_run_wrong_checker(self):
+    def test_topic_restores_and_runs_its_own_checker(self):
         app = self.app()
         app.selectbox(key="topic").select("Partial fractions").run()
         restored = self.app()
         self.assertEqual(restored.selectbox(key="topic").value, "Partial fractions")
-        self.assertTrue(next(b for b in restored.button if b.label == "Check working").disabled)
+        self.assertFalse(next(b for b in restored.button if b.label == "Check working").disabled)
+        restored.text_input(key="question").set_value("1/((x+1)*(x+2))").run()
+        self.click(restored, "Check working")
+        self.assertEqual(restored.session_state["result"].status, "Solution")
+        self.assertEqual(restored.session_state["result"].derivative_label_latex, "")
+
+    def test_partial_equations_first_error_and_edit_invalidation(self):
+        app = self.app()
+        app.selectbox(key="topic").select("Partial fractions").run()
+        app.text_input(key="question").set_value("1/((x+1)*(x+2))").run()
+        self.click(app, "Add step")
+        app.text_input[1].set_value("A/(x+1)+B/(x+2)").run()
+        self.click(app, "Add step")
+        app.text_input[2].set_value("A+B=0").run()
+        self.click(app, "Check working")
+        self.assertEqual(app.session_state["result"].status, "Valid working — incomplete")
+        app.text_input[2].set_value("A+B=1").run()
+        self.assertIsNone(app.session_state["result"])
+        self.click(app, "Check working")
+        self.assertEqual(app.session_state["result"].first_error, 2)
+        app.selectbox(key="topic").select("Differentiation").run()
+        self.assertIsNone(app.session_state["result"])
+        self.assertEqual(len(app.exception), 0)
 
     def test_damaged_file_warning_and_fresh_save(self):
         self.draft_path.write_bytes(b"broken save")

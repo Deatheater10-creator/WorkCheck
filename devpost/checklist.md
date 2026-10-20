@@ -19,7 +19,7 @@ Build mode: learn. Concise explanations before each hands-on check; wait for lea
   Learner check: Check x^2*sin(x) with the original mistaken working, then valid unfinished D(...) working and a completed derivative. Edit a line and inspect cleared results; report confusing or incorrect behavior.
   Commit: `Add local differentiation step checker and editor`
 
-- [ ] **2. Restore saved drafts and safely start a new question**
+- [x] **2. Restore saved drafts and safely start a new question**
   Becomes usable: Question, topic, and ordered lines survive restarting; confirmed reset clears the saved draft too.
   Why now: Protects student work before adding topics.
   PRD ref: `prd.md > States and Boundaries`, `Acceptance Evidence`
@@ -29,7 +29,7 @@ Build mode: learn. Concise explanations before each hands-on check; wait for lea
   Learner check: Edit/reorder lines, restart and inspect restoration. Cancel New question, then confirm and restart to check the old draft stays cleared.
   Commit: `Save local drafts and recover safely`
 
-- [ ] **3. Check partial-fraction reasoning in context**
+- [x] **3. Check partial-fraction reasoning in context**
   Becomes usable: Verify setups, coefficient equations, root-substitution equations, coefficient values, and final decompositions without penalizing valid unfinished work.
   Why now: Addresses the next mathematical risk after differentiation is usable.
   PRD ref: `prd.md > Partial-Fraction Step Checking`, `Feasibility and Priority`
@@ -61,9 +61,16 @@ Build mode: learn. Concise explanations before each hands-on check; wait for lea
 
 ## Hands-on Checkpoints
 
+Current status: Stages 1-3 complete. The learner accepted the detailed working and maths formatting and authorized the Stage 3 commit. Latest full suite: 148 tests passed. Stage 4 is next and has not started; the following earlier entries are the review history.
+
+
 Stage 1 complete: 48 automated checks passed, revised appearance passed learner hands-on review, and commit 93ba8e4 records the checkpoint. Stage 2 is in progress. Details: devpost/validation.md.
 
-Stage 2 learner review passed: learner explicitly confirmed function notation, implicit multiplication, restoration, reordering, Cancel, and confirmed clearing. Mechanical verification: 94 passing tests. Ready for the stage-2 checkpoint including parser repairs.
+Stage 2 complete: learner confirmed function notation, implicit multiplication, restoration, reordering, Cancel, and confirmed clearing. All 94 tests passed. Commit a744ae7 records local drafts and parser repairs. Stage 3 is in progress.
+
+Stage 3 mechanical verification: 129 tests passed, including the full coefficient-method example in an actual spawned worker, root substitution, swapped labels, partial coefficient substitution, domain restrictions, and topic-aware UI checks. App restarted for learner review. Await hands-on feedback before checking or committing stage 3. Optional Discord project-thread suggestion has been offered once.
+
+Stage-3 presentation revision: 143 tests now pass, including positive-first answers, compact exclusions, verified five-step coefficient-method display, equivalent-answer acceptance, and unchanged checking results if presentation fails. Restarted app for review; stage-3 checkbox and commit remain pending as requested.
 
 - [x] Early usable behavior explored — learner confirmed stage 1 passed hands-on checks after the appearance revision
 - [ ] Final kick-the-tires exploration and feedback completed — after slice 5
@@ -88,6 +95,10 @@ Activity mode: planned live app and editor.
 
 ## Revisions
 
+- Learner requested school-style positive-first answers, concise isolated domain exclusions, and the explicit five-step coefficient-method explanation during stage-3 review. Implemented these in a separate display layer; underlying checker modules and acceptance rules are unchanged. Added presentation/equivalence/worker fallback/UI tests. This brings the requested coefficient-method explanation forward; general worked examples and verified practice remain stage 4. Stage 3 stays uncommitted pending review.
+
+- Stage 3 implements the approved partial-fraction context rather than comparing only final answers. Added coefficient-scoped parsing, exact linear-system implication checks, explicit root-substitution notation, partial coefficient substitutions, domain preservation, and topic-aware UI/worker dispatch. An initial final-equality completion bug was repaired; equivalent correct decompositions on either side are recognized. Stage-3 learner check and commit remain pending.
+
 - Learner reported continued rejection of ordinary implicit products. Fresh direct tests accepted both examples before this follow-up, so a live-session cause was not conclusively established. Replaced the coefficient-only regex with token-based normalization for recognized adjacent factors, added both bare-input UI/worker regressions, and restarted the app from its absolute workspace path. Preserve all pending stage-2 changes. Restoration/reset hands-on checks remain explicitly unconfirmed; stage 2 stays unchecked and uncommitted. Stage 3 has not started.
 
 - Learner requested f(x) definitions alongside y and bare expressions, including implicit coefficients. Added shared label parsing, matching prime-labelled derivative working, labelled previews/results, mismatch clarification, and regression tests. Stage-2 learner review is still pending; no mathematical topic or approved feature was deferred.
@@ -95,3 +106,9 @@ Activity mode: planned live app and editor.
 - Learner reported rejection of (2x + 3)^4 during stage-2 review. Added restricted implicit numeric-coefficient multiplication for x, visible * guidance, ambiguity rejection, and parser/maths/UI regression coverage. This repairs input handling within approved chain-rule coverage; stage-2 hands-on review remains pending.
 
 - Stage-1 hands-on feedback requested a more colourful interface. Added local-only header/topic/step/button styles and tinted learning panels while preserving checking behavior. Updated PRD/spec visual direction. Examples/practice remain labelled as upcoming until their approved implementation stage. Await a second learner visual review before the stage-1 commit.
+
+- Learner requested complete equations beside concise explanations. Expanded presentation to six coefficient-method sections, including elimination and back-substitution, and explicit transformations for supported differentiation questions. Stage 3 remains unchecked and uncommitted for review.
+
+- Presentation review: use structural SymPy LaTeX rendering for submitted lines in feedback cards and notation examples, as well as question/step previews, generated working and answers. Symbolic factors use juxtaposition; adjacent numeric factors retain a multiplication dot. Render authored product-rule feedback as inline maths. Keep raw editable input, input-syntax instructions, stored drafts, parser and checking rules unchanged. Unsupported notation receives a preview-unavailable message rather than a guessed rendering. Stage 3 remains uncommitted.
+
+- Stage 3 accepted: learner approved worked steps and maths formatting and requested the completed stage be committed. Stage 4 remains unstarted pending the requested scope and acceptance-check report. No approved feature was deferred.

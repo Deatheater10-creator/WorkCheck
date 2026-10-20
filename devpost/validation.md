@@ -42,7 +42,7 @@ Streamlit AppTest exercised entry, previews, checking, adding/deleting/reorderin
 
 ## Stage 2 — Local Autosave, Restore, and New Question
 
-Status: 94 automated tests passed and learner explicitly confirmed all manual checks, including function notation, implicit multiplication, restoration, reordering, Cancel, and confirmed clearing. Ready to commit stage 2 and parser fixes. Historical pending-review entries below describe earlier states.
+Status: 94 automated tests passed and learner explicitly confirmed all manual checks, including function notation, implicit multiplication, restoration, reordering, Cancel, and confirmed clearing. Committed as a744ae7, `Save local drafts and fix mathematical input notation`. Historical pending-review entries below describe earlier states.
 
 ### Executed Checks
 
@@ -81,3 +81,46 @@ Coefficient-only regex normalization was replaced by token-based insertion of mu
 Full executed suite: **94 tests passed in 43.571 seconds**. Added checks for both bare expressions matching explicit-product inputs; expected derivatives 8*(2*x+3)^3 and 3*(x^2-5*x)^2*(2*x-5); valid original-function and held-derivative working; both inputs in actual fresh spawned maths workers; and both through the editor/preview/check path in AppTest. Existing safety, label, mathematical, autosave, restoration, and reset regression tests continue to pass.
 
 These are automated results only. The learner has explicitly not confirmed stage-2 restoration or reset behavior. Those hands-on checks remain pending; stage 2 is unchecked and uncommitted, and stage 3 has not begun. All pending stage-2 files remain in the working tree. Restarting the app did not clear or replace the student's saved draft.
+
+Subsequent result: learner explicitly confirmed all stage-2 manual checks and authorized commit and progression. Commit a744ae7 records stage 2 and these parser repairs. The paragraph above records the earlier pending state, not current progress.
+
+## Stage 3 — Context-Aware Partial-Fraction Checking
+
+Status: mechanical verification passed; learner hands-on review pending. Stage 3 is uncommitted and its checklist box remains unchecked.
+
+Executed `.\.venv\Scripts\python.exe -m unittest discover -s tests -v`: **129 tests passed in 64.450 seconds**. This includes 32 focused partial-fraction tests, full regression coverage from earlier stages, topic-aware Streamlit AppTest interactions, and the complete seven-line PRD coefficient example in an actual fresh worker using the normal five-second deadline. Dependency consistency and diff whitespace checks passed. App restarted from the absolute workspace path; loopback health returned ok.
+
+Actual mathematical coverage: valid setup, denominator clearing, exact coefficient constraints, coefficient values, valid unfinished systems, partial substitution, final sum, final equality in either direction, equivalent equation scaling/order, swapped A/B assignments, nonmonic/scaled denominators, root-substitution prefixes and separate root markers, and original-domain exclusions. An initial test caught a correct reversed final equality being classified incomplete; this was fixed before the final passing run.
+
+Error/uncertainty cases: wrong coefficient relation, wrong value, wrong identity, and unambiguously wrong supported denominator factors identify the first error. Missing setup, unsupported nonlinear or rational coefficient equations, ambiguous changes of assignments, unsupported questions, and new domain holes request clarification without guessing. An earlier error or unknown blocks later dependent steps; a correct final answer does not erase an earlier error. A and B remain disallowed in differentiation inputs.
+
+The interface now dispatches to the selected topic's local checker, previews coefficient equations, and displays decomposition answers without a derivative label. All stage-2 save/restore/reset tests remain passing. No feature was deferred and no external service or dependency was introduced. Worked teaching examples and revealable practice remain pending stage 4. Full offline cold-browser verification remains stage 5 work.
+
+### Student-Facing Answer Presentation
+
+Learner requested a display refinement during stage-3 review: positive fraction before negative, compact isolated exclusions, and the five-step coefficient method. Implemented a separate display module and display-only result fields; mathematical checker modules and verification decisions are unchanged. Raw answer/domain strings and step/status data remain available and are explicitly compared before/after presentation in tests. Previews omit redundant unit multipliers while preserving held derivative notation.
+
+The reference result now displays 1/(x+1) - 1/(x+2), with x != -1, -2. The method shows A/(x+1)+B/(x+2); 1=A(x+2)+B(x+1); A+B=0 and 2A+B=1; A=1 and B=-1; and the final decomposition. The generated coefficient system, solved values, cleared identity, final identity, and relevant domain are verified exactly before displaying the method. Finite exclusions are compact; non-isolated restrictions retain inequalities or the full exact domain representation rather than dropping conditions.
+
+Final full command: `.\.venv\Scripts\python.exe -m unittest discover -s tests -v` — **143 tests passed in 95.358 seconds**. Coverage includes positive/negative source ordering, isolated and cancelled domain holes, simple inequalities and complex domains, all five reference display steps, equivalent submitted answer orders, unchanged error/uncertainty/step outcomes, preview and result labels, visible worked solution, edit invalidation, and display failure/deadline fallback. An initial UI assertion was corrected to account for Streamlit's LaTeX wrappers; the final full suite passes. The worker delivers the original checked result before optional formatting, so a presentation failure or timeout cannot replace a completed mathematical verdict.
+
+App restarted using the absolute workspace path and health endpoint returned ok. All stage-3 changes remain uncommitted and its learner review is pending. The requested coefficient-method explanation was brought forward; broader fresh examples and revealable practice remain stage-4 work.
+
+
+## Detailed mathematical working revision
+
+Implemented actual equations and an adjacent explanation for every transformation. The reference partial-fraction solution now includes all six requested sections, expansion and collection, both coefficient equations, explicit subtraction to eliminate B, back-substitution, the original-to-final equality, and compact restrictions. Generated coefficients and transformations use the actual question and are symbolically verified before display. Supported differentiation rules also show intermediate derivative transformations with reasons. The working checker and acceptance rules are preserved.
+
+Executed `.\.venv\Scripts\python.exe -m unittest discover -s tests -v`: **145 tests passed in 76.778 seconds**. Includes exact reference working, different/nonmonic/rational coefficients, a zero root, all supported derivative rule families, equivalent-answer acceptance, unchanged checking data, UI rendering and invalidation, autosave/reset, and worker failure/deadline regression coverage. `git diff --check` passed. Stage 3 remains uncommitted for learner review; no new manual review is claimed.
+
+
+## School-style maths across student outputs
+
+Replaced raw code echoes in feedback cards and worked notation examples with the same restricted-parser-to-LaTeX path used by previews. This displays the actual submitted equation (including mistaken working) without changing its checker status or saved text. Formatted the authored product-rule formula as inline maths. All supported expression rendering remains structural, not deletion of multiplication characters; numeric factors retain a visible dot. Typing fields and explicit input-syntax help retain the accepted syntax.
+
+Full command `.\.venv\Scripts\python.exe -m unittest discover -s tests -v`: **148 tests passed in 107.251 seconds**. Added exact formatting regressions for all requested expression forms and numeric multiplication, checks that rendering leaves internal expressions intact, and UI tests for both topics preserving raw draft/step data without code displays. Existing equivalent-answer, first-error, uncertainty, storage and worker tests pass. Diff whitespace checks pass. Restarted the loopback server; health returned ok. Stage 3 remains uncommitted; hands-on review pending.
+
+
+## Stage 3 accepted
+
+Learner confirmed that the worked steps and mathematical formatting are clear and acceptable, and explicitly requested committing the completed Stage 3 changes. Most recent executable verification remains 148 passing tests in 107.251 seconds; only documentation/progress records changed since that run. Stage 3 is complete. Stage 4 remains unstarted while its planned scope and acceptance checks are reported.

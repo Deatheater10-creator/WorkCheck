@@ -19,6 +19,8 @@ Sources: `scope.md > The Unique Kernel`, `The Core Loop`, and `The POC Boundary`
 ## Screens and Layout
 Keep the original question in its own field, with numbered editable working lines and formatted equation previews. Results appear below the question and working. If photo recognition is available, show the photo beside the editable transcription and require confirmation before checking. Result order: verdict, explanation beginning with what the student got wrong, final answer, worked example, and practice. For correct working or no attempt, explain the applicable method without inventing a mistake.
 
+Stage-3 presentation refinement requested by the learner: use familiar school-style equations, preferring positive terms before negative terms where practical. When a real domain excludes only finitely many values, show concise restrictions such as x != -1, -2 rather than an interval union. Preserve inequalities and other genuine domain bounds. For the reference partial-fraction example, show 1/(x+1) - 1/(x+2) and the six-part coefficient method: full setup equality; multiply through; expand and collect; compare coefficients; eliminate and back-substitute with actual equations; substitute the final sum and retain restrictions. This changes presentation, not which mathematical answers or methods are accepted.
+
 ## Look and Feel
 - Warm white background `#F8FAFC`, deep navy headings/navigation `#14213D`, deep teal main buttons/highlights `#0F766E`.
 - Correct steps green `#15803D`; first incorrect step red `#B91C1C`; hints and unclear input amber `#92400E`.
@@ -141,3 +143,6 @@ No product approval is outstanding. The learner approved the full PRD and revise
 
 During spec: document practical expression limits and investigate local photo recognition feasibility. The typed-only fallback is approved. Investigate context-aware partial-fraction checking; if infeasible, propose topic deferral for learner agreement. These investigations cannot silently reduce the agreed first-error checking behavior.
 Review format: Markdown, explicitly selected by the learner.
+
+
+Worked-solution refinement: render actual mathematical equations with a short explanation beside every transformation. Partial fractions include expansion, collection, coefficient comparison, elimination, back-substitution, and the original-to-final equality using the question's actual coefficients. Differentiation shows explicit derivative transformations for the supported sum, product, integer power, chain, sine, cosine, exponential, and logarithm rules. Verify generated transformations symbolically before display; never change the working checker's acceptance rules. Stage 3 was accepted by the learner after review.

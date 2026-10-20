@@ -1,6 +1,6 @@
 # WorkCheck
 
-A local engineering-maths learning tool. **Stages 1–2:** differentiation step checking, an editable numbered workspace, local draft saving/restoration, and confirmed reset. Other approved features are not implemented yet.
+A local engineering-maths learning tool. **Stages 1–3:** differentiation and context-aware partial-fraction step checking, an editable numbered workspace, local draft saving/restoration, and confirmed reset. Verified working for the current question is available; separate teaching examples and targeted practice are the next stage.
 
 ## Start on Windows
 
@@ -56,6 +56,30 @@ Limits: 500 characters per question/line, 20 working lines, 150 syntax nodes per
 
 All mathematical operations run locally. No API keys, paid services, or external AI calls. Equation previews do not establish mathematical correctness. Feedback is cleared when working changes.
 
+## Try partial fractions
+
+Select **Partial fractions** and enter `1/((x+1)*(x+2))` as the question. Add one step per line:
+
+```text
+A/(x+1)+B/(x+2)
+1=A*(x+2)+B*(x+1)
+A+B=0
+2*A+B=1
+A=1
+B=-1
+1/(x+1)-1/(x+2)
+```
+
+The setup assigns A and B to specific denominator terms. Setup, identities, coefficient equations, coefficient values, and partial substitutions such as `1/(x+1)+B/(x+2)` are valid intermediate working, not finished answers. The resolved sum completes the decomposition. A copied original fraction alone is also unfinished. Equivalent equation order/scaling and swapped A/B denominator assignments are supported.
+
+Results use school-style formatting, preferring positive terms first. This example displays `1/(x+1) - 1/(x+2)` and `x ≠ -1, -2`, followed by the coefficient method: write the two-term setup, multiply through, compare coefficients, solve A/B, and substitute. Each displayed method is verified locally. Finite excluded values are compact; interval bounds such as `x > 0` are retained where relevant. Presentation does not change answer equivalence or step verdicts.
+
+Try checking only the first and third lines: the result should be valid but incomplete. Change `A+B=0` to `A+B=1`: it should be the first mistake. Without a setup, a coefficient equation asks for clarification. An unresolved or incorrect line blocks dependent checking; a later correct answer does not erase it.
+
+For the root-substitution method, after the setup use `x=-1: 1=A` and `x=-2: 1=-B`. Alternatively, select a root with `x=-1` on its own line, then write the denominator-cleared identity. This means substitution into a polynomial identity, not substituting into the original fraction at a point where it is undefined.
+
+Scope: nonzero proper rational expressions with exact rational coefficients and two distinct rational linear denominator factors. Preserve original exclusions (here x != -1, -2). Repeated/quadratic factors, nonlinear coefficient equations, unknown coefficient names beyond A/B, and ambiguous changes of coefficient assignments request clarification rather than a guessed verdict. Solving and checking remain local; numerical agreement is not proof.
+
 ## Local drafts and New question
 
 Your current question, topic, and numbered working are saved automatically when you press Enter or leave an edited field. **Before refreshing or closing, finish editing and look for “Saved on this device.”** Text still actively being typed may not yet have reached the local app. Restore happens when you return, including after restarting the server. Feedback and practice results are not restored; recheck the saved working.
@@ -73,3 +97,6 @@ A missing save starts normally. A damaged or incompatible save is preserved as `
 ```
 
 See devpost/validation.md for actual verification results. Full offline browser verification is scheduled for the final build stage; do not infer it from architecture alone.
+
+
+Worked-solution refinement: render actual mathematical equations with a short explanation beside every transformation. Partial fractions include expansion, collection, coefficient comparison, elimination, back-substitution, and the original-to-final equality using the question's actual coefficients. Differentiation shows explicit derivative transformations for the supported sum, product, integer power, chain, sine, cosine, exponential, and logarithm rules. Verify generated transformations symbolically before display; never change the working checker's acceptance rules. Stage 3 was accepted by the learner after review.

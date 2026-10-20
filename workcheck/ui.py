@@ -4,11 +4,12 @@ from pathlib import Path
 from html import escape
 
 import streamlit as st
-import sympy as sp
 
 from .parser import LIMITS, InputIssue, derivative_label_latex, parse_step, question_expression
 from .worker import run_check
 from .storage import DraftStore, SaveError, empty_draft
+from .partial_fractions import parse_partial_line
+from .presentation import school_latex, feedback_markdown
 
 
 def save_current():
@@ -130,8 +131,14 @@ def preview(text, *, question=False):
         if question:
             parsed = question_expression(text)
             label = parsed.function_label + " = " if parsed.function_label else ""
-            st.latex(label + sp.latex(parsed.expr))
+            st.latex(label + school_latex(parsed.expr))
         else:
+            if st.session_state.topic == "Partial fractions":
+                line = parse_partial_line(text)
+                label = school_latex(line.left.expr) + " = " if line.left is not None else ""
+                prefix = f"x = {school_latex(line.root)}:\\quad " if line.root is not None and not line.root_marker else ""
+                st.latex(prefix + label + school_latex(line.right.expr))
+                return
             source_label = None
             try:
                 source_label = question_expression(st.session_state.question).function_label
@@ -141,10 +148,10 @@ def preview(text, *, question=False):
             if role == "function":
                 label = parsed.function_label + " = "
             elif left is not None:
-                label = sp.latex(left.expr) + " = "
+                label = school_latex(left.expr) + " = "
             else:
                 label = derivative_label_latex(parsed.function_label or source_label) + " = "
-            st.latex(label + sp.latex(parsed.expr))
+            st.latex(label + school_latex(parsed.expr))
     except InputIssue as exc:
         st.caption(f"Preview unavailable: {exc}")
 
@@ -162,7 +169,7 @@ def show_result(result):
         st.info(result.status)
     with st.container(border=True, key="explanation_panel"):
         st.markdown("**Explanation · understand your working**")
-        st.write(result.explanation)
+        st.markdown(feedback_markdown(result.explanation))
     for step in result.steps:
         with st.container(border=True):
             if step.status in ("Correct final answer", "Valid intermediate step"):
@@ -178,14 +185,29 @@ def show_result(result):
                 f'<span class="{status_class}">{icon} {escape(step.status)}</span></div>',
                 unsafe_allow_html=True,
             )
-            st.code(step.text, language=None)
-            st.write(step.reason)
+            # Render the original submitted line, including incorrect working.
+            # Parsing here formats notation only; it never regrades the step.
+            preview(step.text)
+            st.markdown(feedback_markdown(step.reason))
     if result.answer_latex:
         with st.container(border=True, key="answer_panel"):
             st.subheader("Final answer")
-            st.latex(result.derivative_label_latex + " = " + result.answer_latex)
-            st.caption("Retain the original real-domain restrictions:")
-            st.latex(r"x \in " + result.domain_latex)
+            label = result.derivative_label_latex + " = " if result.derivative_label_latex else ""
+            st.latex(label + (result.answer_display_latex or result.answer_latex))
+            st.caption("Restrictions")
+            st.latex(result.restrictions_display_latex or (r"x \in " + result.domain_latex))
+    if result.worked_solution:
+        with st.container(border=True, key="worked_solution_panel"):
+            st.subheader(result.worked_solution_title)
+            for number, step in enumerate(result.worked_solution, 1):
+                st.markdown(f"**{number}. {step['instruction']}**")
+                for index, equation in enumerate(step["math"]):
+                    maths, explanation = st.columns([3, 2])
+                    maths.latex(equation)
+                    if step.get("explanations"):
+                        explanation.write(step["explanations"][index])
+    if result.presentation_note:
+        st.caption(result.presentation_note)
 
 
 def main():
@@ -210,9 +232,9 @@ def main():
       <section class="wc-topic wc-topic-purple"><span class="wc-topic-symbol" aria-hidden="true">f′(g(x)) · g′(x)</span>
       <strong>Chain rule</strong><p>Connect the outer derivative to the inner function.</p><span class="wc-topic-badge">AVAILABLE · DIFFERENTIATION</span></section>
       <section class="wc-topic wc-topic-amber"><span class="wc-topic-symbol" aria-hidden="true">A / (x+a)</span>
-      <strong>Partial fractions</strong><p>Follow the decomposition and coefficient equations.</p><span class="wc-topic-badge">COMING IN A LATER BUILD STAGE</span></section>
+      <strong>Partial fractions</strong><p>Follow the decomposition and coefficient equations.</p><span class="wc-topic-badge">AVAILABLE · TWO LINEAR FACTORS</span></section>
     </div>''', unsafe_allow_html=True)
-    st.caption("Local differentiation checker · Your draft stays on this device. Partial fractions, teaching examples and practice arrive in later stages. Photo recognition is not enabled.")
+    st.caption("Local maths checking · Your draft stays on this device. Targeted practice arrives in a later stage. Photo recognition is not enabled.")
     if st.session_state.recovery_warning:
         st.warning(st.session_state.recovery_warning)
     st.button("New question", on_click=request_new_question)
@@ -223,23 +245,32 @@ def main():
             confirm.button("Clear question and working", on_click=confirm_new_question)
             cancel.button("Cancel", on_click=cancel_new_question)
     st.selectbox("Topic", ["Differentiation", "Partial fractions"], key="topic", on_change=invalidate)
-    if st.session_state.topic != "Differentiation":
-        st.info("Partial-fraction checking arrives in stage 3. This draft can be saved, but checking is not enabled for this topic yet.")
+    is_partial = st.session_state.topic == "Partial fractions"
     with st.container(border=True, key="question_panel"):
         st.markdown("**01 · Start with your question**")
-        st.text_input("Question · expression to differentiate", key="question", on_change=invalidate,
-                      placeholder="x^2*sin(x)")
+        st.text_input("Question · fraction to decompose" if is_partial else "Question · expression to differentiate", key="question", on_change=invalidate,
+                      placeholder="1/((x+1)*(x+2))" if is_partial else "x^2*sin(x)")
         st.caption("Implicit multiplication is accepted: 2x, 2(x+1), x sin(x), and (x+1)(x-1). Use * and parentheses whenever the meaning could be ambiguous.")
-        st.caption("Enter an expression, y = ..., or f(x) = ..., for example f(x) = (x^2 - 5x)^3. For f(x), the derivative is shown as f'(x).")
+        if not is_partial:
+            st.caption("Enter an expression, y = ..., or f(x) = ..., for example f(x) = (x^2 - 5x)^3. For f(x), the derivative is shown as f'(x).")
+        else:
+            st.caption("Use a proper rational fraction with two distinct linear factors. Original denominator exclusions are retained in the answer.")
         preview(st.session_state.question, question=True)
     with st.expander("Notation and input limits"):
+        if is_partial:
+            st.write("Use a proper fraction with two distinct rational linear factors. Set up A/(x+1)+B/(x+2) first, then enter one identity, coefficient equation, or value per line. A and B are available in this topic's working only.")
+            for example in ("A/(x+1)+B/(x+2)", "1=A*(x+2)+B*(x+1)", "A+B=0", "2*A+B=1", "A=1", "B=-1", "1/(x+1)-1/(x+2)"):
+                preview(example)
+            st.write("Alternative method: after the setup, use x=-1: 1=A or put x=-1 on its own line before a denominator-cleared equation. Root substitution is for polynomial identities, not the original undefined fraction.")
         st.write("Use x, numbers, + - * / ^, parentheses, sin(...), cos(...), exp(...), ln(...). Numeric coefficients and adjacent factors such as 2x, 2(x+1), x sin(x), and (x+1)(x-1) are accepted. Function names stay whole: write x*sin(x) or x sin(x), not xsin(x). Ambiguous division or exponent notation requires * and parentheses.")
-        st.write("Working labels: y = ... or f(x) = ... for the original function; dy/dx = ... or matching f'(x) = ... for the derivative. Single-letter labels such as g(x) also work. D(...) means an unfinished derivative with respect to x; D(original expression) = ... is supported too.")
-        st.code("dy/dx = D(x^2)*sin(x) + x^2*D(sin(x))", language=None)
+        if not is_partial:
+            st.write("Working labels: y = ... or f(x) = ... for the original function; dy/dx = ... or matching f'(x) = ... for the derivative. Single-letter labels such as g(x) also work. D(...) means an unfinished derivative with respect to x; D(original expression) = ... is supported too.")
+            preview("dy/dx = D(x^2)*sin(x) + x^2*D(sin(x))")
         st.caption(LIMITS)
         st.caption("A preview checks notation only. It does not mean the mathematics is correct. More complex domains may require clarification.")
     st.subheader("Your working · optional")
-    st.caption("One mathematical step per line. Valid unfinished working is different from a completed derivative.")
+    st.caption("One mathematical step per line. Valid unfinished working is different from a completed decomposition." if is_partial
+               else "One mathematical step per line. Valid unfinished working is different from a completed derivative.")
     if not st.session_state.lines:
         st.markdown('<div class="wc-empty">✎ <strong>Make your thinking visible.</strong><br>Add your first step below, or check the question on its own.</div>', unsafe_allow_html=True)
     for index, line in enumerate(st.session_state.lines):
@@ -250,7 +281,8 @@ def main():
         with st.container(border=True, key="editor_" + line_id):
             st.markdown(f'<div class="wc-step-heading"><span class="wc-step-number">{index + 1}</span><span>Your next step</span></div>', unsafe_allow_html=True)
             st.text_input(f"Step {index + 1}", key=key, on_change=edit_line, args=(line_id,),
-                          help="2x means 2*x. Adjacent factors such as 2(x+1) work too. Use * and parentheses for ambiguous division or powers, e.g. 8*(2*x+3)^3.")
+                          help="Start with A/(x+1)+B/(x+2), then one equation such as A+B=0 per line. See notation help for root substitutions." if is_partial else
+                          "2x means 2*x. Adjacent factors such as 2(x+1) work too. Use * and parentheses for ambiguous division or powers, e.g. 8*(2*x+3)^3.")
             preview(line["text"])
             up, down, delete = st.columns(3)
             up.button("Move up", key="up_" + line_id, disabled=index == 0, on_click=move_line, args=(line_id, -1))
@@ -266,21 +298,21 @@ def main():
     st.caption("Edits are saved when you press Enter or leave a field. Before closing or refreshing, finish editing and look for ‘Saved on this device.’ One current draft is shared by local tabs; use one editing tab at a time.")
     if len(st.session_state.lines) > 20:
         st.warning("The 20-line checking limit is exceeded. Your lines remain intact; delete or combine lines to check them.")
-    if st.button("Check working", type="primary", disabled=st.session_state.topic != "Differentiation"):
+    if st.button("Check working", type="primary"):
         save_current()
         revision = st.session_state.revision
         question = st.session_state.question
         lines = [line["text"] for line in st.session_state.lines]
         with st.spinner("Checking locally with exact mathematical rules…"):
-            result = run_check(question, lines)
+            result = run_check(question, lines, topic=st.session_state.topic)
         if revision == st.session_state.revision:
             st.session_state.result = result
             st.session_state.result_revision = revision
     if st.session_state.result is not None and st.session_state.result_revision == st.session_state.revision:
         show_result(st.session_state.result)
     st.markdown('''<div class="wc-learning-panels">
-      <section class="wc-learning-panel wc-example"><span class="wc-coming">Coming next · worked examples</span>
-      <h3>See the method in action</h3><p>A guided worked example will connect the explanation to a fresh problem. This feature is not available in stage 1.</p></section>
+      <section class="wc-learning-panel wc-example"><span class="wc-coming">Understand the method</span>
+      <h3>See the method in action</h3><p>Partial-fraction results include the coefficient method. More guided examples will arrive with targeted practice.</p></section>
       <section class="wc-learning-panel wc-practice"><span class="wc-coming">Coming next · targeted practice</span>
       <h3>Turn understanding into practice</h3><p>Three targeted questions with revealable, verified solutions are planned for a later stage. Practice is not available yet.</p></section>
     </div>''', unsafe_allow_html=True)

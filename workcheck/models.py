@@ -20,6 +20,11 @@ class CheckResult:
     first_error: int | None = None
     blocked_at: int | None = None
     derivative_label_latex: str = r"\frac{dy}{dx}"
+    answer_display_latex: str = ""
+    restrictions_display_latex: str = ""
+    worked_solution: list = field(default_factory=list)
+    worked_solution_title: str = "Worked solution"
+    presentation_note: str = ""
 
 
 @dataclass

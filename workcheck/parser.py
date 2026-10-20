@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 import sympy as sp
 
 X = sp.Symbol("x", real=True)
+A, B = sp.symbols("A B", real=True)
 MAX_CHARS = 500
 MAX_STEPS = 20
 MAX_NODES = 150
@@ -37,7 +38,7 @@ def _depth(node):
     return 1 + max((_depth(c) for c in ast.iter_child_nodes(node)), default=0)
 
 
-def _normalize_multiplication(source):
+def _normalize_multiplication(source, *, allow_coefficients=False):
     """Insert products at known token boundaries, never inside identifiers.
 
     Python's tokenizer only identifies tokens; it does not execute the input.
@@ -53,8 +54,9 @@ def _normalize_multiplication(source):
            (tokenize.NL, tokenize.NEWLINE, tokenize.ENDMARKER) for u in raw) for t in raw):
         raise InputIssue("Enter one expression per field or numbered line.")
     functions = {"sin", "cos", "exp", "ln", "D"}
+    symbols = {"x", "A", "B"} if allow_coefficients else {"x"}
     for token in tokens:
-        if token.type == tokenize.NAME and token.string not in functions | {"x"}:
+        if token.type == tokenize.NAME and token.string not in functions | symbols:
             raise InputIssue("Unsupported name. Use x and the listed functions; names are not split into products. " + hint)
         if token.type == tokenize.NUMBER and not re.fullmatch(r"(?:\d+(?:\.\d*)?|\.\d+)", token.string):
             raise InputIssue("Use ordinary numbers, not scientific or special literals.")
@@ -66,7 +68,7 @@ def _normalize_multiplication(source):
     for i, token in enumerate(tokens):
         if i:
             previous = tokens[i-1]
-            ends_factor = previous.type == tokenize.NUMBER or previous.string in {"x", ")"}
+            ends_factor = previous.type == tokenize.NUMBER or previous.string in symbols | {")"}
             starts_factor = token.type in (tokenize.NUMBER, tokenize.NAME) or token.string == "("
             if ends_factor and starts_factor:
                 if previous.type == token.type == tokenize.NUMBER:
@@ -82,13 +84,13 @@ def _normalize_multiplication(source):
     return tokenize.untokenize(output)
 
 
-def parse_expression(text: str, *, allow_d: bool = False) -> Expression:
+def parse_expression(text: str, *, allow_d: bool = False, allow_coefficients: bool = False) -> Expression:
     if len(text) > MAX_CHARS:
         raise InputIssue("The 500-character limit is exceeded. Your text has been kept.")
     source = text.strip().replace("^", "**")
     if not source:
         raise InputIssue("Enter a mathematical expression.")
-    source = _normalize_multiplication(source)
+    source = _normalize_multiplication(source, allow_coefficients=allow_coefficients)
     try:
         root = ast.parse(source, mode="eval")
     except (SyntaxError, ValueError, RecursionError):
@@ -108,6 +110,8 @@ def parse_expression(text: str, *, allow_d: bool = False) -> Expression:
             return Expression(sp.Rational(literal), degree=0)
         if isinstance(node, ast.Name) and node.id == "x":
             return Expression(X, degree=1)
+        if allow_coefficients and isinstance(node, ast.Name) and node.id in ("A", "B"):
+            return Expression(A if node.id == "A" else B, degree=0)
         if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.UAdd, ast.USub)):
             a = build(node.operand)
             if isinstance(node.op, ast.USub):
