@@ -11,6 +11,35 @@ DISPLAY = r"\frac{1}{x + 1} - \frac{1}{x + 2}"
 
 
 class PresentationTests(unittest.TestCase):
+    def test_product_correction_uses_the_students_actual_parts(self):
+        cases = [("x^2 sin(x)", "2x cos(x)", "x^{2}", r"\sin{\left(x \right)}"),
+                 ("x^3 cos(x)", "-3x^2 sin(x)", "x^{3}", r"\cos{\left(x \right)}")]
+        for question, working, first, second in cases:
+            with self.subTest(question=question):
+                result = check_differentiation(question, [working])
+                self.assertEqual(result.status, "First mistake")
+                self.assertEqual(result.first_error, 1)
+                self.assertIn("$" + first + "$", result.explanation)
+                self.assertIn("$" + second + "$", result.explanation)
+                self.assertIn("$u'v + uv'$", result.explanation)
+                self.assertNotIn("counterexample", result.steps[0].reason)
+
+    def test_coefficient_correction_respects_swapped_and_scaled_setups(self):
+        cases = [("A/(x+2)+B/(x+1)", ["A+B=0", "A+2B=1"],
+                  ["A + B = 0", "A + 2 B = 1"]),
+                 ("2A/(x+1)+3B/(x+2)", ["2A+3B=0", "4A+3B=1"],
+                  ["2 A + 3 B = 0", "4 A + 3 B = 1"])]
+        for setup, equations, displayed in cases:
+            with self.subTest(setup=setup):
+                valid = check_partial_fractions(QUESTION, [setup] + equations)
+                self.assertEqual(valid.status, "Valid working — incomplete")
+                wrong = check_partial_fractions(QUESTION, [setup, "A+B=1"])
+                self.assertEqual(wrong.first_error, 2)
+                for equation in displayed:
+                    self.assertIn("$" + equation + "$", wrong.explanation)
+                self.assertEqual(check_partial_fractions(QUESTION, ["-1/(x+2)+1/(x+1)"]).status,
+                                 "Correct final answer")
+
     def test_structural_school_notation_and_numeric_multiplication(self):
         examples = {
             "2*x": "2 x",

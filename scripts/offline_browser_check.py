@@ -184,6 +184,7 @@ def main():
         browser.call('Network.enable')
         browser.call('Network.setCacheDisabled', {'cacheDisabled': True})
         browser.call('Runtime.enable')
+        browser.call('Emulation.setEmulatedMedia', {'features': [{'name': 'prefers-reduced-motion', 'value': 'no-preference'}]})
         browser.call('Fetch.enable', {'patterns': [{'urlPattern': '*'}]})
         browser.call('Page.navigate', {'url': f'http://127.0.0.1:{APP_PORT}'})
         browser.wait_text('Your working')
@@ -204,8 +205,40 @@ def main():
         assert browser.js("document.querySelectorAll('.katex').length") > 10
         assert browser.js("document.querySelectorAll('.katex-error').length") == 0
         assert browser.js("[...document.querySelectorAll('.katex-html')].filter(e=>e.getBoundingClientRect().height>0).length") > 10
-        assert browser.js("[...document.querySelectorAll('[data-testid=stLatex]')].every(e=>!e.innerText.includes('*'))")
+        assert browser.js("[...document.querySelectorAll('.katex-display')].every(e=>!e.innerText.includes('*'))")
         report['checks'].append('KaTeX maths rendered in browser, no parse errors or programming multiplication')
+        browser.js("document.querySelector('.st-key-explanation_panel').scrollIntoView({block:'start',behavior:'instant'})")
+        browser.screenshot('student-explanation.png')
+        # Real CSS and progressive controls: equations fade without changing geometry.
+        panel = '.st-key-worked_solution_panel'
+        click_in_panel = lambda label: browser.js(
+            f"[...document.querySelectorAll('{panel} button')].find(e=>e.innerText.trim()==={json.dumps(label)}).click()")
+        rows = "document.querySelectorAll('.st-key-worked_solution_panel [class*=st-key-solution_reveal_]')"
+        full_rows = browser.js(rows + '.length')
+        assert full_rows > 2
+        assert browser.js("getComputedStyle(document.querySelector('[class*=st-key-mistake_highlight_]')).animationName") == 'wc-mistake'
+        click_in_panel('Step by step')
+        wait_for(lambda: browser.js(rows + '.length') == 1)
+        wait_for(lambda: browser.js("document.querySelectorAll('[class*=st-key-mistake_highlight_]').length") == 0)
+        maths_ready = "Boolean(" + rows + "[0]?.querySelector('.katex-display .katex'))"
+        wait_for(lambda: browser.js(maths_ready))
+        geometry = "(()=>{const e=" + rows + "[0].querySelector('.katex-display');const r=e.getBoundingClientRect();return [r.width,r.height,getComputedStyle(e).transform]})()"
+        before = browser.js(geometry)
+        assert browser.js("getComputedStyle(" + rows + "[0]).animationName") == 'wc-reveal'
+        click_in_panel('Next step')
+        wait_for(lambda: browser.js(rows + '.length') == 2)
+        wait_for(lambda: browser.js(maths_ready))
+        assert browser.js(geometry) == before
+        browser.js("document.querySelector('.st-key-worked_solution_panel').scrollIntoView({block:'start',behavior:'instant'})")
+        browser.screenshot('progressive.png')
+        browser.call('Emulation.setEmulatedMedia', {'features': [{'name': 'prefers-reduced-motion', 'value': 'reduce'}]})
+        assert browser.js("matchMedia('(prefers-reduced-motion: reduce)').matches")
+        assert browser.js("getComputedStyle(" + rows + "[0]).animationName") == 'none'
+        assert browser.js("getComputedStyle(document.querySelector('button')).transitionDuration") == '0s'
+        click_in_panel('Show all')
+        wait_for(lambda: browser.js(rows + '.length') == full_rows)
+        browser.call('Emulation.setEmulatedMedia', {'features': []})
+        report['checks'].append('Progressive transformations, show all, stable equation dimensions and reduced-motion CSS verified in Edge')
         browser.screenshot('differentiation.png')
         # Inspect actual browser controls before interacting (Streamlit uses switches).
         (RUN/'controls.json').write_text(json.dumps(browser.js("[...document.querySelectorAll('input, [role=switch]')].map(e=>({tag:e.tagName,type:e.type,role:e.getAttribute('role'),'aria-label':e.getAttribute('aria-label')}))"), indent=2), encoding='utf-8')
@@ -246,8 +279,12 @@ def main():
         wait_for(lambda: browser.js("document.querySelectorAll('[data-testid=stTextInput] input').length") == 1)
         assert browser.js("document.querySelector('[data-testid=stTextInput] input').value") == ''
         report['checks'].append('Cancel preserves draft; confirmed reset clears durable and visible draft')
-        browser.js("(() => {const e=document.querySelector('input[role=combobox]');e.focus();e.select()})()")
-        browser.call('Input.insertText', {'text': 'Partial fractions'})
+        # Open the accessible menu with a real key event. Typing immediately
+        # after a rerender can target an input React is about to replace.
+        wait_for(lambda: browser.js("Boolean(document.querySelector('input[role=combobox]:not(:disabled)'))"))
+        browser.js("document.querySelector('input[role=combobox]').focus()")
+        browser.call('Input.dispatchKeyEvent', {'type': 'keyDown', 'key': 'ArrowDown', 'code': 'ArrowDown', 'windowsVirtualKeyCode': 40})
+        browser.call('Input.dispatchKeyEvent', {'type': 'keyUp', 'key': 'ArrowDown', 'code': 'ArrowDown', 'windowsVirtualKeyCode': 40})
         wait_for(lambda: browser.js("[...document.querySelectorAll('[role=option]')].some(e=>e.innerText.trim().includes('Partial fractions'))"))
         browser.js("[...document.querySelectorAll('[role=option]')].find(e=>e.innerText.trim().includes('Partial fractions')).click()")
         wait_for(lambda: json.loads((RUN/'draft.json').read_text(encoding='utf-8'))['topic'] == 'Partial fractions')

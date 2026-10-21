@@ -1,11 +1,22 @@
 import unittest
 from unittest.mock import MagicMock, patch
 import copy
+from pathlib import Path
+import subprocess
+import sys
 from workcheck.worker import run_check
 from workcheck.models import CheckResult
 
 
 class WorkerTests(unittest.TestCase):
+    def test_spawn_entrypoint_does_not_import_the_interface(self):
+        root = Path(__file__).resolve().parents[1]
+        probe = subprocess.run([sys.executable, "-c",
+            "import runpy, sys; runpy.run_path('app.py', run_name='__mp_main__'); "
+            "assert 'workcheck.ui' not in sys.modules; assert 'streamlit' not in sys.modules"],
+            cwd=root, capture_output=True, text=True, timeout=15)
+        self.assertEqual(probe.returncode, 0, probe.stderr)
+
     def test_learning_in_real_bounded_worker(self):
         from workcheck.worker import run_learning
         pack = run_learning("x^2*sin(x)", "Differentiation")
@@ -60,7 +71,7 @@ class WorkerTests(unittest.TestCase):
         lines = ["A/(x+1)+B/(x+2)", "1=A*(x+2)+B*(x+1)", "A+B=0", "2*A+B=1",
                  "A=1", "B=-1", "1/(x+1)-1/(x+2)"]
         result = run_check("1/((x+1)*(x+2))", lines, topic="Partial fractions")
-        self.assertEqual(result.status, "Correct final answer")
+        self.assertEqual(result.status, "Correct final answer", result.explanation)
         self.assertEqual(len(result.steps), 7)
     def test_both_reported_inputs_in_actual_spawned_solver(self):
         for question, answer in [("(2x + 3)^4", "8*(2*x+3)^3"),

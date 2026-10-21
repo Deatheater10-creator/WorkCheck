@@ -26,18 +26,45 @@ def clear_learning():
     st.session_state.practice = []
     st.session_state.learning = None
     for key in list(st.session_state):
-        if key.startswith("reveal_practice_"):
+        if key.startswith(("reveal_practice_", "solution_")):
             del st.session_state[key]
+    st.session_state.mistake_highlight_pending = False
 
 
-def show_worked_steps(steps):
+def set_solution_count(key, count):
+    st.session_state[key] = count
+
+
+def show_worked_steps(steps, scope):
+    """Reveal individual transformations without changing their equation layout."""
+    total = sum(len(step["math"]) for step in steps)
+    key = "solution_count_" + scope
+    if key not in st.session_state:
+        st.session_state[key] = total
+    visible = min(st.session_state[key], total)
+    controls = st.columns(3)
+    controls[0].button("Step by step", key="solution_start_" + scope,
+                       on_click=set_solution_count, args=(key, min(1, total)))
+    controls[1].button("Next step", key="solution_next_" + scope,
+                       disabled=visible >= total, on_click=set_solution_count,
+                       args=(key, min(visible + 1, total)))
+    controls[2].button("Show all", key="solution_all_" + scope,
+                       disabled=visible >= total, on_click=set_solution_count, args=(key, total))
+    st.caption(f"{visible} of {total} worked lines shown. Next step shows one more change; Show all opens the full solution.")
+    position = 0
     for number, step in enumerate(steps, 1):
+        if position >= visible:
+            break
         st.markdown(f"**{number}. {step['instruction']}**")
         for index, equation in enumerate(step["math"]):
-            maths, explanation = st.columns([3, 2])
-            maths.latex(equation)
-            if step.get("explanations"):
-                explanation.write(step["explanations"][index])
+            if position >= visible:
+                break
+            with st.container(key=f"solution_reveal_{scope}_{position}"):
+                maths, explanation = st.columns([3, 2])
+                maths.latex(equation)
+                if step.get("explanations"):
+                    explanation.write(step["explanations"][index])
+            position += 1
 
 
 def show_learning(pack):
@@ -49,7 +76,7 @@ def show_learning(pack):
                 st.subheader("Worked example")
                 st.caption("A different question using the same main method.")
                 st.latex(pack.example["question_latex"])
-                show_worked_steps(pack.example["worked_solution"])
+                show_worked_steps(pack.example["worked_solution"], "example")
     if len(pack.practice) == 3:
         st.subheader("Your three practice problems")
         st.caption("Try each problem yourself, then reveal its answer and full working. Practice attempts are not automatically graded.")
@@ -64,7 +91,7 @@ def show_learning(pack):
                     st.markdown("**Answer**")
                     label = r"\frac{dy}{dx} = " if st.session_state.topic == "Differentiation" else ""
                     st.latex(label + item["answer_latex"])
-                    show_worked_steps(item["worked_solution"])
+                    show_worked_steps(item["worked_solution"], f"practice_{index}")
     if pack.message:
         st.warning(pack.message)
 
@@ -231,12 +258,19 @@ def show_result(result):
         if pack and pack.concepts:
             with st.expander("Understand the concept", expanded=True):
                 st.subheader("Understand the concept")
+                st.write("Differentiating means finding how an expression changes as x changes. The result is called its derivative."
+                         if st.session_state.topic == "Differentiation" else
+                         "Partial fractions means rewriting one fraction as simpler fractions that add up to the same thing.")
                 for concept in pack.concepts:
                     st.markdown("**" + concept["title"] + "**")
                     st.write(concept["explanation"])
                     st.latex(concept["formula"])
+    highlight = st.session_state.get("mistake_highlight_pending", False)
     for step in result.steps:
-        with st.container(border=True):
+        pulse = highlight and step.number == result.first_error and step.status == "First mistake"
+        event = st.session_state.get("feedback_event", "")
+        card_key = f"mistake_highlight_{event}_{step.number}" if pulse else f"feedback_line_{step.number}"
+        with st.container(border=True, key=card_key):
             if step.status in ("Correct final answer", "Valid intermediate step"):
                 status_class, icon = "wc-verified", "✓"
             elif step.status == "First mistake":
@@ -253,7 +287,10 @@ def show_result(result):
             # Render the original submitted line, including incorrect working.
             # Parsing here formats notation only; it never regrades the step.
             preview(step.text)
-            st.markdown(feedback_markdown(step.reason))
+            reason = step.reason
+            if step.status == "First mistake" and "\n\n" in reason:
+                reason = reason.split("\n\n", 1)[0] + " See the explanation above for how to fix this line."
+            st.markdown(feedback_markdown(reason))
     if result.answer_latex:
         with st.container(border=True, key="answer_panel"):
             st.subheader("Final answer")
@@ -265,10 +302,11 @@ def show_result(result):
         with st.container(border=True, key="worked_solution_panel"):
             with st.expander(result.worked_solution_title, expanded=True):
                 st.subheader(result.worked_solution_title)
-                show_worked_steps(result.worked_solution)
+                show_worked_steps(result.worked_solution, "question")
     if result.presentation_note:
         st.caption(result.presentation_note)
     show_learning(st.session_state.get("learning"))
+    st.session_state.mistake_highlight_pending = False
 
 
 def main():
@@ -396,6 +434,8 @@ def main():
                     learning = LearningPack(message=str(exc))
         if revision == st.session_state.revision:
             st.session_state.result = result
+            st.session_state.feedback_event = uuid4().hex
+            st.session_state.mistake_highlight_pending = True
             st.session_state.result_revision = revision
             st.session_state.learning = learning
             st.session_state.practice = learning.practice if learning else []

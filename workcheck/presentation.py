@@ -127,13 +127,13 @@ def coefficient_solution(source, domain):
         elim_left, elim_right = sp.expand(q*equations[1].lhs-s*equations[0].lhs), q*v-s*u
         if sp.expand((elim_left-elim_right)-(q*residuals[1]-s*residuals[0])) != 0:
             return []
-        solve_rows.append((lhs_text + " = " + rhs_text, "Subtract scaled equations so the B terms cancel."))
+        solve_rows.append((lhs_text + " = " + rhs_text, "Make the B terms equal by multiplying each whole equation if needed. Subtract one equation from the other: the B terms disappear."))
         if sp.simplify(elim_left-A) != 0 or sp.simplify(elim_right-substitutions[A]) != 0:
-            solve_rows.append((_equation(elim_left, elim_right), "Collect the A terms and simplify the right side."))
+            solve_rows.append((_equation(elim_left, elim_right), "Combine the A terms on the left and work out the numbers on the right."))
     else:
         index = 0 if q == 0 else 1
-        solve_rows.append((school_latex(equations[index]), "This equation already contains only A, so solve it directly."))
-    solve_rows.append((_equation(A, substitutions[A]), "Divide by the coefficient of A to find its value."))
+        solve_rows.append((school_latex(equations[index]), "Only A is unknown in this equation. Rearrange it to find A."))
+    solve_rows.append((_equation(A, substitutions[A]), "Divide both sides by the number multiplying A, if needed. This gives the value of A."))
     # Substitute into an equation whose B coefficient is nonzero.
     index = 0 if q != 0 else 1
     row = matrix.row(index)
@@ -142,58 +142,60 @@ def coefficient_solution(source, domain):
     if sp.expand(substituted_left-substituted_right-residuals[index].subs(A, substitutions[A])) != 0:
         return []
     solve_rows.append((_equation(substituted_left, substituted_right, ordered=True),
-                       "Substitute the value of A into the other coefficient equation."))
+                       "Put the value you found for A into an equation that still contains B."))
     reduced_left = row[1]*B
     reduced_right = sp.simplify(substituted_right-row[0]*substitutions[A])
     if sp.simplify(reduced_left-B) != 0:
-        solve_rows.append((_equation(reduced_left, reduced_right), "Move the known constant to the right side."))
+        solve_rows.append((_equation(reduced_left, reduced_right), "Subtract the known number from both sides to leave only the B term on the left."))
     if sp.simplify(reduced_left.subs(substitutions)-reduced_right) != 0:
         return []
-    solve_rows.append((_equation(B, substitutions[B]), "Solve for B."))
+    solve_rows.append((_equation(B, substitutions[B]), "Rearrange to leave B on its own. Now both unknown numbers are known."))
     return [
-        _worked_step("Set up", [(_equation(source, setup), "Use one constant numerator for each distinct linear factor.")]),
+        _worked_step("Set up", [(_equation(source, setup), "Split the denominator into its two factors. Put an unknown number, A or B, above each one; we will find these numbers next.")]),
         _worked_step("Multiply both sides by $" + school_latex(first*second) + "$", [
-            (_equation(left, right), "Cancel the denominator factors on each side.")]),
+            (_equation(left, right), "Multiply every term on both sides by the same full denominator. The matching factors cancel, leaving an equation without fractions.")]),
         _worked_step("Expand and collect", [
-            (_equation(left, expanded, ordered=True), "Expand both products using the distributive law."),
-            (school_latex(left) + r" = \left(" + school_latex(right_poly.nth(1)) + r"\right)x + \left(" + school_latex(right_poly.nth(0)) + r"\right)", "Group the x terms together and the constant terms together.")]),
+            (_equation(left, expanded, ordered=True), "Open each bracket: multiply the number or letter outside by every term inside."),
+            (school_latex(left) + r" = \left(" + school_latex(right_poly.nth(1)) + r"\right)x + \left(" + school_latex(right_poly.nth(0)) + r"\right)", "Put the terms containing x together. Put the terms without x together.")]),
         _worked_step("Compare coefficients", [
-            (school_latex(equations[0]), "Match the coefficients of x on the two sides."),
-            (school_latex(equations[1]), "Match the constant terms on the two sides.")]),
+            (school_latex(equations[0]), "The expression multiplying x must be the same on both sides. If a side has no x term, its x coefficient is zero."),
+            (school_latex(equations[1]), "The terms without x must also match on both sides. This gives the second equation.")]),
         _worked_step("Solve the simultaneous equations", solve_rows),
         _worked_step("Substitute", [
-            (_equation(source, final), "Replace A and B by their solved values."),
-            (concise_restrictions(domain), "Keep the excluded values from the original denominator.")]),
+            (_equation(source, final), "Put the values of A and B back into the two fractions. This is the final answer."),
+            (concise_restrictions(domain), "These x values made the original denominator zero, so they are still not allowed.")]),
     ]
 
 
 def _derivative_rule(expression):
     D = lambda value: sp.Derivative(value, X, evaluate=False)
     if not expression.has(X):
-        return sp.S.Zero, "The derivative of a constant is zero."
+        return sp.S.Zero, "This part is a fixed number. It does not change as x changes, so its derivative is zero."
     if expression == X:
-        return sp.S.One, "The derivative of x is 1."
+        return sp.S.One, "The derivative of x is 1: when x increases by one, x itself also increases by one."
     if isinstance(expression, sp.Add):
-        return sp.Add(*(D(term) for term in expression.args)), "Differentiate each term separately."
+        return sp.Add(*(D(term) for term in expression.args)), "Differentiate each term separately. Keep the plus or minus sign belonging to each term."
     if isinstance(expression, sp.Mul):
         constants = [factor for factor in expression.args if not factor.has(X)]
         variables = [factor for factor in expression.args if factor.has(X)]
         if constants:
-            return sp.Mul(*constants)*D(sp.Mul(*variables)), "Keep the constant multiplier and differentiate the remaining expression."
+            return sp.Mul(*constants)*D(sp.Mul(*variables)), "Keep the number multiplying this part unchanged. Differentiate only the expression containing x."
         return sp.Add(*(D(factor)*sp.Mul(*(other for j, other in enumerate(expression.args) if j != i))
-                        for i, factor in enumerate(expression.args))), "Use the product rule: differentiate one factor at a time and add the terms."
+                        for i, factor in enumerate(expression.args))), "Use the product rule. Make one term for each part: differentiate that part and leave the other parts unchanged. Add these terms."
     if isinstance(expression, sp.Pow) and expression.exp.is_Integer:
         base, power = expression.args
-        return power*base**(power-1)*D(base), "Use the power rule and multiply by the derivative of the inner expression."
+        explanation = (f"Power rule: bring the power {power} in front and lower the power by 1. "
+                       "Keep what is inside the power unchanged for now, then multiply by its derivative.")
+        return power*base**(power-1)*D(base), explanation
     argument = expression.args[0] if expression.args else None
     if expression.func == sp.sin:
-        return sp.cos(argument)*D(argument), "Differentiate sine to cosine, then multiply by the inner derivative."
+        return sp.cos(argument)*D(argument), "Change sine to cosine and keep the same angle expression. Then multiply by the derivative of that angle expression."
     if expression.func == sp.cos:
-        return -sp.sin(argument)*D(argument), "Differentiate cosine to negative sine, then multiply by the inner derivative."
+        return -sp.sin(argument)*D(argument), "Change cosine to negative sine: do not lose the minus sign. Keep the same angle expression and multiply by its derivative."
     if expression.func == sp.exp:
-        return sp.exp(argument)*D(argument), "Keep the exponential and multiply by the inner derivative."
+        return sp.exp(argument)*D(argument), "Keep the exponential exactly as it is. Multiply it by the derivative of the expression in its power."
     if expression.func == sp.log:
-        return D(argument)/argument, "For ln(u), divide the inner derivative by u."
+        return D(argument)/argument, "Differentiate the expression inside ln. Put that derivative on top of a fraction, with the original inside expression underneath."
     return None, ""
 
 
@@ -202,7 +204,7 @@ def derivative_solution(source, domain, label):
     expected = sp.diff(expression, X)
     derivative_label = label + " = "
     current = sp.Derivative(expression, X, evaluate=False)
-    rows = [(derivative_label + school_latex(current), "Take the derivative with respect to x.")]
+    rows = [(derivative_label + school_latex(current), "The d/dx symbol means 'differentiate with respect to x'. It shows a derivative we still need to work out.")]
     for _ in range(80):
         held = next((node for node in sp.preorder_traversal(current) if isinstance(node, sp.Derivative)), None)
         if held is None:
@@ -213,16 +215,16 @@ def derivative_solution(source, domain, label):
         updated = current.xreplace({held: replacement})
         if updated == current or verify(Expression(updated), expected, domain).status != "proved":
             return []
-        rows.append((derivative_label + school_latex(updated), explanation))
+        rows.append((derivative_label + school_latex(updated), "Focus on $" + school_latex(held.expr) + "$ in this line. " + explanation))
         current = updated
     if current.has(sp.Derivative) or verify(Expression(current), expected, domain).status != "proved":
         return []
     return [
-        _worked_step("Start with the function", [(school_latex(source), "This is the expression being differentiated.")]),
+        _worked_step("Start with the function", [(school_latex(source), "Start with the expression in the question. We want to find how it changes as x changes.")]),
         _worked_step("Differentiate step by step", rows),
         _worked_step("Write the final answer", [
-            (derivative_label + school_latex(expected), "Simplify the derivative; equivalent forms are accepted."),
-            (concise_restrictions(domain), "Retain the original real-domain restrictions.")]),
+            (derivative_label + school_latex(expected), "All the derivatives are now worked out. Combine terms if helpful; a different-looking answer is accepted when it has the same mathematical value."),
+            (concise_restrictions(domain), "These are the x values for which this answer applies. Keep any limits from the original question and the derivative.")]),
     ]
 
 

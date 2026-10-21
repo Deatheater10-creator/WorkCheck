@@ -61,7 +61,7 @@ Build mode: learn. Concise explanations before each hands-on check; wait for lea
 
 ## Hands-on Checkpoints
 
-Current status: All five build slices are complete. The learner approved the ordinary-notation parser fixes, confirmed their offline checks passed, and authorized the Stage 5 commit. Latest guarded suite: 177 tests passed; fresh offline browser flows passed. Final readiness sign-off and the code tour/app map remain unfinished before 6-ship. Earlier entries below are the review history.
+Current status: All five build slices are complete. Learner approved the animations and authorized committing the final-review refinements. Fresh full guarded suite: 181 tests passed; fresh offline browser flow passed end to end. Final readiness report and code walkthrough/app map are being completed; explicit final readiness confirmation remains separate before 6-ship. Earlier entries below are the review history.
 
 
 Stage 1 complete: 48 automated checks passed, revised appearance passed learner hands-on review, and commit 93ba8e4 records the checkpoint. Stage 2 is in progress. Details: devpost/validation.md.
@@ -79,6 +79,9 @@ Learn mode includes each slice's learner check. Fast mode pauses at these planne
 
 ## Final Review
 
+- [x] Learner confirmed the animation and progressive controls worked and authorized committing the changes after regression checks.
+- [x] Student-friendly concepts, mistake corrections and worked-step explanations implemented and regression-checked; learner authorized committing the pending refinement. No additional unreported manual language checks are claimed.
+
 - [ ] Final review complete — feedback resolved and learner confirms ready to ship
 
 ## Code Tour and App Map
@@ -94,6 +97,12 @@ Reflection: not yet offered; personal responses belong in ignored profile.
 Activity mode: planned live app and editor.
 
 ## Revisions
+
+- Final review commit authorized. Fresh guarded full suite passed 181 tests in 142.493 seconds, including worker startup isolation; fresh cold offline Edge flow passed both topics and all documented regression checkpoints. Corrected unnecessary UI import during Windows maths-worker startup without extending deadlines or changing checking rules, and repaired the browser harness's topic-menu interaction. Dependency/whitespace checks passed. Full evidence in validation.md. Continue the requested readiness report and source-based learning wrap-up; no publishing or submission performed.
+
+- Learner confirmed animation works and requested clearer explanations. Rewrote student-facing concepts, corrections, worked-step guidance and uncertainty messages; preserve maths decisions and accepted methods. New corrections use actual factors and context-correct A/B equations. Focused 16 tests passed; guarded full run 177/180 passed, and all 3 worker-sensitive failures passed a separate guarded rerun. Latest browser verified the revised differentiation teaching and existing reveals/restoration/reset; its later topic-selector automation failed, so no new end-to-end browser pass is claimed. Details in validation.md. Await language review before committing the final-review refinements; grading remains deferred.
+
+- Final-review refinement requested: subtle local reveals/button feedback/first-mistake emphasis and progressive worked solutions with immediate Show all. Implemented independent progression, reduced-motion CSS, state invalidation and regression/browser checks. Latest full guarded run: 177 of 178 passed; the remaining existing partial-fraction case passed its separate guarded rerun. Fresh offline Edge flow passed, including reduced-motion and equation stability. Details and initial failed probes are in validation.md. Normal app restarted for hands-on review. Keep this refinement uncommitted and final readiness unchecked until learner review; automatic practice grading remains deferred.
 
 - Learner requested school-style positive-first answers, concise isolated domain exclusions, and the explicit five-step coefficient-method explanation during stage-3 review. Implemented these in a separate display layer; underlying checker modules and acceptance rules are unchanged. Added presentation/equivalence/worker fallback/UI tests. This brings the requested coefficient-method explanation forward; general worked examples and verified practice remain stage 4. Stage 3 stays uncommitted pending review.
 

@@ -10,9 +10,15 @@ def _mistake_explanation(source, candidate):
         u, v = expression.args
         wrong_product = sp.diff(u, X) * sp.diff(v, X)
         if sp.simplify(candidate.expr.doit() - wrong_product) == 0:
-            return ("This line multiplies the two derivatives. The product rule requires "
-                    "u'·v + u·v': differentiate one factor at a time and add the two terms.")
-    return "This expression is not the requested derivative on the original domain. Recheck the differentiation and algebra in this line."
+            return ("This line multiplies the two derivatives. For a product, you need to keep one part unchanged each time, then add two terms.\n\n"
+                    "**How to fix it — use the product rule**\n\n"
+                    f"1. Differentiate ${sp.latex(u)}$ and keep ${sp.latex(v)}$ unchanged.\n"
+                    f"2. Keep ${sp.latex(u)}$ unchanged and differentiate ${sp.latex(v)}$.\n"
+                    "3. Add these two terms.\n\n"
+                    "The rule is $u'v + uv'$, where u and v are the two parts and the prime mark means 'the derivative of'. Follow the worked solution below to see each change.")
+    return ("This derivative is not correct. Compare this line with the worked solution below, one change at a time. "
+            "Check the signs and powers, and remember the derivative of any expression inside brackets. "
+            "This line alone does not show exactly which smaller change caused the mistake.")
 
 
 def check_differentiation(question: str, lines: list[str]) -> CheckResult:
@@ -24,13 +30,13 @@ def check_differentiation(question: str, lines: list[str]) -> CheckResult:
         return CheckResult("Needs clarification", "The 20-working-line limit is exceeded. Your working is kept; remove or combine lines to check it.")
     domain = domain_of(source)
     if domain is None or domain is sp.S.EmptySet:
-        return CheckResult("Needs clarification", "I cannot establish a nonempty supported real domain for this question.")
+        return CheckResult("Needs clarification", "I cannot work out which real values of x are allowed for this question. This is a limit of the checker; it does not mean your question is wrong.")
     answer = sp.diff(source.expr.doit(), X)
     expected_domain = domain_of(type(source)(answer))
     if expected_domain is None:
-        return CheckResult("Needs clarification", "I cannot verify this derivative's domain within the supported rules.")
+        return CheckResult("Needs clarification", "I cannot check which values of x are allowed in this derivative. This version cannot verify the question safely.")
     domain = domain.intersect(expected_domain)
-    result = CheckResult("Solution", "No attempted working was supplied. Here is the derivative.",
+    result = CheckResult("Solution", "You have not entered any working to check. Read the method below, then try the practice questions.",
                          answer_latex=sp.latex(answer), domain_latex=sp.latex(domain),
                          derivative_label_latex=derivative_label_latex(source.function_label))
     active_label = source.function_label
@@ -42,7 +48,7 @@ def check_differentiation(question: str, lines: list[str]) -> CheckResult:
             continue
         supplied = True
         if blocked:
-            result.steps.append(StepResult(number, text, "Not checked", "Resolve the earlier incorrect or unclear line first."))
+            result.steps.append(StepResult(number, text, "Not checked", "Fix or clarify the earlier line, then check again. A later line may depend on that earlier mistake."))
             continue
         try:
             role, candidate, left = parse_step(text, expected_label=active_label)
@@ -68,7 +74,7 @@ def check_differentiation(question: str, lines: list[str]) -> CheckResult:
         if proof.status == "disproved":
             reason = ("This line does not match the original function." if role == "function"
                       else _mistake_explanation(source, candidate))
-            result.steps.append(StepResult(number, text, "First mistake", reason + " " + proof.reason))
+            result.steps.append(StepResult(number, text, "First mistake", reason))
             result.status = "First mistake"
             result.first_error = number
             result.explanation = f"Line {number}: {reason}"
@@ -79,11 +85,12 @@ def check_differentiation(question: str, lines: list[str]) -> CheckResult:
             complete = role != "function" and not candidate.held
             completed = completed or complete
             label = "Correct final answer" if complete else "Valid intermediate step"
-            reason = ("The derivative is complete; no further simplification is required." if complete
-                      else "This is valid working, but it does not yet complete the derivative.")
+            reason = ("This is a correct final derivative. You do not need to simplify it further." if complete
+                      else "This step is correct so far. You still need to work out the remaining derivatives." if role != "function"
+                      else "You have copied the original function correctly. Next, start differentiating it.")
             result.steps.append(StepResult(number, text, label, reason, complete))
     if supplied and not blocked:
         result.status = "Correct final answer" if completed else "Valid working — incomplete"
-        result.explanation = ("All supplied steps are valid and the derivative is complete." if completed
-                              else "The supplied working is valid so far. Evaluate the remaining derivatives to finish; unfinished is not wrong.")
+        result.explanation = ("Your working is correct and you have reached the final derivative." if completed
+                              else "Your working is correct so far, but the derivative is not finished. Work out any derivatives still shown in the line; an unfinished step is not a mistake.")
     return result
