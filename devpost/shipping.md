@@ -35,11 +35,13 @@ Audit baseline: 9cefc8e, 7 commits and 44 tracked files. Targeted scan inspected
 
 This combines a targeted scanner with manual review; it is not a guarantee against every possible secret. Recheck intended new files and final history immediately before pushing. Preserve the planning docs, coverage, setup, technical evidence and app map. Keep `.agents/`, `.claude/`, `agent/`, `skills-lock.json`, `.venv/`, `.workcheck/`, the learner profile, local drafts and credentials out of publication. The first four currently remain unrelated untracked workspace material; never blanket-stage them.
 
-**Licence decision is pending.** A concrete MIT proposal is available locally at `.workcheck/LICENSE-MIT.proposed`, clearly marked unapplied. MIT is a permissive option allowing reuse/modification/commercial distribution with retained notices: [licence reference](https://choosealicense.com/licenses/mit/). The owner must approve the licence and confirm the copyright-holder line before a root `LICENSE` is created. The proposed generic line is `Copyright (c) 2026 WorkCheck contributors`; it is not a claim that this has been accepted. Third-party packages retain their own licences; do not relicense their code.
+**MIT licence approved and applied.** The learner approved the proposed licence, including `Copyright (c) 2026 WorkCheck contributors`. See the root [LICENSE](../LICENSE). Third-party packages retain their own licences.
 
-GitHub CLI was not found on PATH and no Git remote is configured. No GitHub account/owner has been selected. Do not infer authorization to publish from permission to prepare locally. Before creating or pushing, obtain the owner/account, approval of public publication of code and included history, and final licence selection.
+**Publication explicitly authorized:** account `Deatheater10-creator`, public repository `WorkCheck`, audited code and included Git history. No remote or public repository has yet been confirmed. Authentication is being established using Git Credential Manager; never include credentials in files, chat, or remote URLs.
 
-After approval, the technical sequence is:
+Fresh pre-publication audit: all eight reachable commits, 47 historical paths, 119 unique file versions and eight commit metadata objects checked. No configured secret-pattern findings or private paths were found. This adds complete per-commit path checks and metadata scanning to the earlier manual review. Evidence remains local in `.workcheck/final-history-audit.json`; repeat after the publication-preparation commit.
+
+The authorized technical sequence is:
 
 1. Apply the approved root licence; audit and commit the final public files.
 2. Create an empty public `WorkCheck` repository under the confirmed account. Avoid auto-generating competing README/licence commits in GitHub. If an existing repository is supplied, inspect it first rather than overwriting history.
@@ -62,7 +64,7 @@ No placeholder remote commands were run and no repository was created.
 - [x] Relevant maths/UI regressions and documented running server checked.
 - [x] Existing tracked history and publication boundaries audited locally.
 - [x] Concrete demo plan and factual writing aids prepared.
-- [ ] GitHub owner, copyright-holder name, open-source licence and explicit public-publishing authorization.
+- [x] GitHub owner, proposed copyright-holder line, MIT licence and explicit public-publishing authorization.
 - [ ] Final audited public files committed and public repository URL verified anonymously.
 - [ ] Learner records and uploads the demo; public video URL verified.
 - [ ] Learner provides the actual signed-in field prompts/limits and writes their answers, including Skill Pack usage.
