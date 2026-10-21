@@ -6,6 +6,28 @@ Project guides: [readiness and submission blockers](devpost/readiness.md), [begi
 
 Shipping preparation: [verified event requirements and repository status](devpost/shipping.md), [demo recording plan](devpost/demo-plan.md), and [factual evidence for learner-written answers](devpost/submission-evidence.md). The project uses the [MIT licence](LICENSE). [Public repository](https://github.com/Deatheater10-creator/WorkCheck) is published and anonymously verified. The demo video remains pending; no runtime service is needed.
 
+## Use on your phone without the laptop
+
+The repository also includes a free-plan [Render Blueprint](https://render.com/docs/infrastructure-as-code), `render.yaml`, which runs the hosted entry point on Python 3.12. Deploy it from the repository through Render to get an HTTPS phone link. [Free services can sleep when idle](https://render.com/docs/free), so opening the app may take longer after inactivity. Deployment is pending an account connection; no live URL has been verified.
+
+Deploy the hosted entry point `cloud_app.py` to [Streamlit Community Cloud](https://share.streamlit.io/). The hosted app runs on a server, so your laptop can be switched off. Your phone needs internet access.
+
+1. Push the hosted-version changes to the GitHub repository.
+2. Sign in to Streamlit Community Cloud with GitHub and select **Create app**.
+3. Choose repository `Deatheater10-creator/WorkCheck`, branch `master`, and entry point `cloud_app.py`.
+4. Under **Advanced settings**, select Python **3.12**, then deploy.
+5. Open the resulting `https://…streamlit.app` link on your phone. Bookmark it or use **Add to Home Screen**.
+
+See the [official deployment instructions](https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/deploy). No API keys are required by WorkCheck. Deployment has not yet been performed or verified.
+
+The hosted version processes questions on the server and keeps a separate temporary draft for each browser session. Refreshing, closing the tab, or a server restart can clear working. Copy anything you want to keep. There are no accounts or permanent cloud drafts. The desktop entry point `app.py` retains local draft saving.
+
+To preview the hosted version locally:
+
+```powershell
+.\.venv\Scripts\python.exe -m streamlit run cloud_app.py --server.address 127.0.0.1 --server.port 8502
+```
+
 ## Start on Windows
 
 WorkCheck runs on this computer in your browser. No accounts, API keys, paid services or internet are needed after setup. Python 3.12 (64-bit) and Windows 11 were used for verification. Other computers and Python versions are not yet validated.

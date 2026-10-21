@@ -61,6 +61,22 @@ class LoadResult:
     warning: bool = False
 
 
+class SessionDraftStore:
+    """A hosted visitor's temporary draft; never read or write shared disk."""
+
+    def __init__(self):
+        self.draft = empty_draft()
+
+    def load(self):
+        return LoadResult(validate_draft(self.draft), "Your draft is kept in this browser session only.")
+
+    def save(self, draft):
+        try:
+            self.draft = validate_draft(draft)
+        except DraftInvalid as exc:
+            raise SaveError(str(exc)) from exc
+
+
 class DraftStore:
     def __init__(self, path=None):
         self.path = Path(path) if path is not None else default_draft_path()

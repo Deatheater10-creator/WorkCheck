@@ -7,7 +7,7 @@ import streamlit as st
 
 from .parser import LIMITS, InputIssue, derivative_label_latex, parse_step, question_expression
 from .worker import run_check, run_learning
-from .storage import DraftStore, SaveError, empty_draft
+from .storage import DraftStore, SessionDraftStore, SaveError, empty_draft
 from .partial_fractions import parse_partial_line
 from .presentation import school_latex, feedback_markdown
 from .questions import interpret_question
@@ -105,7 +105,8 @@ def save_current():
              "revision": st.session_state.revision}
     try:
         st.session_state.draft_store.save(draft)
-        st.session_state.save_message = "Saved on this device."
+        st.session_state.save_message = ("Kept in this browser session only." if st.session_state.get("hosted")
+                                         else "Saved on this device.")
         st.session_state.save_failed = False
         st.session_state.recovery_warning = ""
         return True
@@ -118,7 +119,7 @@ def save_current():
 def initialize_draft():
     if st.session_state.get("draft_initialized"):
         return
-    st.session_state.draft_store = DraftStore()
+    st.session_state.draft_store = SessionDraftStore() if st.session_state.get("hosted") else DraftStore()
     loaded = st.session_state.draft_store.load()
     # Preserve live stage-1 working when this update is loaded in an existing tab.
     has_live_work = bool(st.session_state.question.strip() or st.session_state.lines)
@@ -309,8 +310,9 @@ def show_result(result):
     st.session_state.mistake_highlight_pending = False
 
 
-def main():
+def main(hosted=False):
     st.set_page_config(page_title="WorkCheck", page_icon="✎", layout="centered")
+    st.session_state.hosted = hosted
     styles = Path(__file__).with_name("styles.css").read_text(encoding="utf-8")
     st.markdown(f"<style>{styles}</style>", unsafe_allow_html=True)
     defaults = {"question": "", "topic": "Differentiation", "lines": [], "revision": 0,
@@ -323,7 +325,7 @@ def main():
       <div class="wc-eyebrow">YOUR MATHS STUDY WORKSPACE</div>
       <h1>WorkCheck</h1><p>Understand your working.<br>Build confidence, one step at a time.</p>
       <div class="wc-hero-math" aria-hidden="true">ƒ′(x)</div>
-      <div class="wc-hero-chips"><span>Step-by-step checking</span><span>Clear explanations</span><span>Runs locally</span></div>
+      <div class="wc-hero-chips"><span>Step-by-step checking</span><span>Clear explanations</span><span>Maths practice</span></div>
     </header>
     <div class="wc-topics" aria-label="Topic coverage">
       <section class="wc-topic wc-topic-blue"><span class="wc-topic-symbol" aria-hidden="true">u′v + uv′</span>
@@ -333,7 +335,11 @@ def main():
       <section class="wc-topic wc-topic-amber"><span class="wc-topic-symbol" aria-hidden="true">A / (x+a)</span>
       <strong>Partial fractions</strong><p>Follow the decomposition and coefficient equations.</p><span class="wc-topic-badge">AVAILABLE · TWO LINEAR FACTORS</span></section>
     </div>''', unsafe_allow_html=True)
-    st.caption("Local maths checking and verified practice · Your draft stays on this device. Photo recognition is not enabled.")
+    if hosted:
+        st.caption("Online maths checking and verified practice · Questions are processed on the server. Photo recognition is not enabled.")
+        st.info("Your working is kept in this browser session only. Refreshing, closing the tab or a server restart can clear it. Copy any working you want to keep.")
+    else:
+        st.caption("Local maths checking and verified practice · Your draft stays on this device. Photo recognition is not enabled.")
     if st.session_state.recovery_warning:
         st.warning(st.session_state.recovery_warning)
     st.button("New question", on_click=request_new_question)
@@ -412,7 +418,10 @@ def main():
         st.button("Retry saving", on_click=save_current)
     else:
         st.caption(st.session_state.save_message)
-    st.caption("Edits are saved when you press Enter or leave a field. Before closing or refreshing, finish editing and look for ‘Saved on this device.’ One current draft is shared by local tabs; use one editing tab at a time.")
+    if hosted:
+        st.caption("Press Enter or leave a field to keep edits in this session. Copy your working before leaving; this version has no permanent draft storage.")
+    else:
+        st.caption("Edits are saved when you press Enter or leave a field. Before closing or refreshing, finish editing and look for ‘Saved on this device.’ One current draft is shared by local tabs; use one editing tab at a time.")
     if len(st.session_state.lines) > 20:
         st.warning("The 20-line checking limit is exceeded. Your lines remain intact; delete or combine lines to check them.")
     needs_confirmation = request.sentence and (bool(request.issue) or not st.session_state.get("question_confirmed", False))
