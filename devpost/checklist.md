@@ -61,7 +61,7 @@ Build mode: learn. Concise explanations before each hands-on check; wait for lea
 
 ## Hands-on Checkpoints
 
-Current status: All five build slices are complete. Learner approved the animations and authorized committing the final-review refinements, now recorded in 0726ff7. Fresh full guarded suite: 181 tests passed; fresh offline browser flow passed end to end. Final readiness report, beginner source walkthrough and offline app map are complete and checked. The learning wrap-up is an evidence-based recap/reference route linked to earlier learner hands-on checks, not a claim of a new guided exercise. Explicit final PoC readiness confirmation remains open before 6-ship. Earlier entries below are the review history.
+Current status: All five build slices, final readiness confirmation and learning wrap-up are complete. The learner explicitly confirmed the PoC ready within its documented scope and authorized 6-ship on 21 October 2026. Application refinements are recorded in 0726ff7; readiness/walkthrough/map in 9cefc8e. Final full guarded suite: 181 tests passed; complete offline browser flow passed. Shipping is now in progress; see shipping.md. Earlier entries below are historical review records, not current blockers.
 
 
 Stage 1 complete: 48 automated checks passed, revised appearance passed learner hands-on review, and commit 93ba8e4 records the checkpoint. Stage 2 is in progress. Details: devpost/validation.md.
@@ -82,7 +82,7 @@ Learn mode includes each slice's learner check. Fast mode pauses at these planne
 - [x] Learner confirmed the animation and progressive controls worked and authorized committing the changes after regression checks.
 - [x] Student-friendly concepts, mistake corrections and worked-step explanations implemented and regression-checked; learner authorized committing the pending refinement. No additional unreported manual language checks are claimed.
 
-- [ ] Final review complete — feedback resolved and learner confirms ready to ship
+- [x] Final review complete — learner explicitly confirmed the PoC is ready within its documented scope and authorized proceeding to 6-ship on 21 October 2026.
 
 ## Code Tour and App Map
 
@@ -94,9 +94,11 @@ Activity and evidence: source-based walkthrough and evidence-based recap, ground
 Route and stops: ui.py::main (input/save/invalidation), differentiation.py::check_differentiation with verification.py::verify (decision/evidence), ui.py::show_result/show_learning with practice.py::verify_candidate (verified teaching/display). Reference route explained; fresh learner navigation is not claimed.
 Edit outcome: safe explanatory-sentence edit offered, none performed or retained.
 Reflection: optional transfer question offered in the walkthrough; no response recorded or invented. Personal responses belong in ignored profile.
-Activity mode: evidence-based recap and source walkthrough/reference, with agent-observed automated app execution. Final readiness confirmation is still open; 6-ship has not started.
+Activity mode: evidence-based recap and source walkthrough/reference, with agent-observed automated app execution. Final readiness confirmation has now been explicitly supplied; 6-ship is in progress.
 
 ## Revisions
+
+- Learner explicitly confirmed the PoC ready within documented scope and authorized 6-ship. Confirmed the exact hackathon URL with the learner; checked public rules/overview and the organizer's new-field update. Prepared a publication audit, concrete demo plan and factual writing references. Signed-in form, licence/public-publishing authorization, GitHub owner and public URLs remain pending; personal responses and exit survey stay learner-written. See shipping.md. No runtime features were added and both approved deferrals remain.
 
 - Committed final-review application changes as 0726ff7. Completed readiness.md, the beginner code-walkthrough.md and a standalone offline app-map.html from that source snapshot. Verified all source/link anchors and real Edge rendering with scripts disabled, keyboard controls and narrow layout. The wrap-up is recorded honestly as a source-based explanation/recap of prior reviewed behaviour, not an unperformed learner exercise. Optional edit/reflection are offered without becoming a gate. No public remote or demo-video link is recorded; the current form, learner-written fields/survey and explicit final readiness confirmation remain before submission. No 6-ship activity or publication performed.
 

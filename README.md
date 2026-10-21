@@ -4,6 +4,8 @@ A local engineering-maths learning tool. All five planned build stages are imple
 
 Project guides: [readiness and submission blockers](devpost/readiness.md), [beginner code walkthrough](devpost/code-walkthrough.md), and [offline app map](devpost/app-map.html). Open the HTML map locally in your browser. These are technical guides; the learner writes their own submission.
 
+Shipping preparation: [verified event requirements and repository status](devpost/shipping.md), [demo recording plan](devpost/demo-plan.md), and [factual evidence for learner-written answers](devpost/submission-evidence.md). Public repository/video links and the project licence are still pending; no runtime service is needed.
+
 ## Start on Windows
 
 WorkCheck runs on this computer in your browser. No accounts, API keys, paid services or internet are needed after setup. Python 3.12 (64-bit) and Windows 11 were used for verification. Other computers and Python versions are not yet validated.

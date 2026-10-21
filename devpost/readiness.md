@@ -2,7 +2,7 @@
 
 Reviewed 21 October 2026. Application source checkpoint: **0726ff73b32da3f741d02a12169b174981f2ab17**, `Polish learning explanations and accessible solution reveals`.
 
-**Technical result: ready for a local demonstration within the tested typed-input scope. Submission preparation is not complete.** The learner approved animations and authorized the commit. This report does not claim a new manual language review, a completed submission, or the learner's explicit final ready-to-ship confirmation.
+**Technical result: ready for a local demonstration within the tested typed-input scope.** On 21 October 2026 the learner explicitly confirmed the PoC ready within its documented scope and authorized 6-ship. Submission preparation is in progress: see [shipping.md](shipping.md) for the confirmed event, verified public requirements, local audit and remaining tasks. This does not claim an unreported manual language check or a completed submission.
 
 ## What is ready
 
@@ -47,12 +47,12 @@ App-map checks passed: 42 local links and source anchors resolve to real files/s
 
 | Remaining item | Evidence/status and next action |
 | --- | --- |
-| Explicit final PoC readiness confirmation | Animation approval and commit authorization are recorded. Broad ready-to-ship confirmation after this report is not yet recorded; the final-review checkbox stays open. |
+| Explicit final PoC readiness confirmation | Complete: learner explicitly confirmed readiness within the documented scope and authorized 6-ship on 21 October 2026. |
 | Public GitHub URL | No remote is configured and no verified public WorkCheck URL is recorded. In 6-ship, audit tracked files/history for private material, then obtain explicit public-publishing authorization. Local commits are not publication. |
 | Accessible demo-video URL | No verified link or recording is recorded in the project. Demonstrate the first-mistake kernel, valid unfinished working and verified practice reveal in a short actual app recording. The learner chooses and speaks their own narration. |
-| Current Devpost form and eligibility | The live form, deadline, eligibility and exact video constraints have not been verified in this readiness pass. Check them in 6-ship before relying on any submission assumption; no new limits or requirements are invented here. |
+| Current Devpost form and eligibility | Correct event confirmed; public rules, deadline, video guidance and organizer field update checked in shipping.md. The complete signed-in form remains inaccessible; entrant eligibility and personal confirmations are for the learner. |
 | Learner-written fields and exit survey | Completion is not recorded. Under the installed shipping workflow, the learner writes the project description, submission answers and survey responses. The agent can help with mechanics and spelling/grammar, not author those responses. |
 
 The installed 6-ship workflow calls for a public repository, an accessible short demo video and learner-completed form/survey fields. Deployment and peer feedback are optional in that workflow. Actual live-form requirements must still be checked. Photo recognition and automatic practice grading are approved exclusions, not unresolved implementation blockers for the typed proof of concept.
 
-**6-ship has not started; no repository was published and nothing was submitted.** The readiness report and technical learning artifacts are complete for review. The next user-facing step is to review this status and explicitly confirm whether the PoC is ready for submission preparation.
+**6-ship has started; no repository was published and nothing was submitted.** The readiness confirmation is complete. Next tasks are licence/publication authorization, public repository and video links, and learner-written answers to the actual signed-in form. Photo recognition and automatic practice grading remain deferred.

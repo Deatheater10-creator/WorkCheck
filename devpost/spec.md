@@ -31,6 +31,8 @@ Learner approved Python, SymPy, and Streamlit. Routine details below are propose
 - Resolve and pin exact compatible dependency versions during the first build setup; record direct versions in requirements.txt and the tested full environment in requirements-lock.txt. No dependency installation or application runtime compatibility test has occurred during this planning step.
 
 ## Where It Runs and How Someone Tries It
+Shipping update, 21 October 2026: the learner confirmed final PoC readiness and the event https://learn-ai-basics.devpost.com/. Public repository and demo-video URLs are not yet available. Record them only after publication/link verification; no deployment or paid service is selected. Current requirements, audit and next steps: shipping.md. Screen-action plan: demo-plan.md. Photo recognition and automatic practice grading remain deferred.
+
 Local Windows process, browser at http://127.0.0.1:8501. Bind only to 127.0.0.1. No API keys, accounts, cloud database, hosting, or paid services. Loopback browser traffic stays on the same device.
 
 Beginner Windows instructions to include in README (planned commands; files are created during build):

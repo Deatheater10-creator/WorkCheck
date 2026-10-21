@@ -1,5 +1,13 @@
 # WorkCheck Validation
 
+## 6-ship entry — 21 October 2026
+
+Learner explicitly confirmed final PoC readiness within documented scope and authorized 6-ship; separately confirmed the exact event URL. Public event/rules/organizer update were inspected; the complete signed-in form is not accessible. Full current status and source links: shipping.md. No personal form answers, recording narration or exit-survey responses were authored by the agent.
+
+Relevant shipping rechecks passed: documented normal server health ok; 3 ordinary-notation/maths tests in 0.684 seconds; 2 UI core-journey/reveal/reset/invalidation cases in 25.238 seconds under the existing network guard, with zero nonlocal attempts. Dependency consistency passed. No application code changed since the final 181-test/full browser passes.
+
+Publication preparation audited 7 commits, 44 tracked files and 133 history objects at 9cefc8e, with no configured secret-pattern hits or private-profile/environment-file history paths. Planning docs present; ignored personal profile not tracked. Sources/documents and intended additions were reviewed for relevance and privacy. This is a targeted audit, not a guarantee against every secret. GitHub CLI was absent from PATH and no origin/account/public URL was configured. A proposed, unapplied MIT licence is local under ignored .workcheck/; owner choice and copyright line remain to be confirmed. No public repository was created, no push occurred, and no video or submission was uploaded. Demo plan and factual writing aids are technical materials, not a submitted entry.
+
 ## Final regression and commit authorization — 21 October 2026
 
 Commit outcome: application/refinement checkpoint **0726ff73b32da3f741d02a12169b174981f2ab17** created as requested. Readiness and learning artifacts are in readiness.md, code-walkthrough.md and app-map.html. The map records that application snapshot. All 42 local links/source anchors resolved against actual files and AST symbols. Standalone Edge rendering passed with page scripts disabled, keyboard-operated native details, no 390-pixel horizontal overflow, no external page requests and no JavaScript exceptions; desktop/mobile screenshots were visually inspected. Map artifact: `.workcheck/offline-d3fa36a6/map-report.json`. The walkthrough is an evidence-based recap/reference route connected to earlier learner hands-on checks, not a fabricated guided code exercise or personal learning claim. Optional edit/reflection offered; none performed or answered. Final readiness confirmation and actual submission work remain open.
