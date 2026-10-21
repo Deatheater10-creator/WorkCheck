@@ -1,6 +1,6 @@
 # WorkCheck shipping record
 
-Status: in progress. Reviewed 21 October 2026. The learner explicitly confirmed the PoC ready within its documented scope and authorized 6-ship. They confirmed the exact event URL below. No public repository or demo video exists as a confirmed project link. Nothing has been published or submitted by the agent.
+Status: in progress. Reviewed 21 October 2026. The learner explicitly confirmed the PoC ready within its documented scope and authorized 6-ship. They confirmed the exact event URL below. The public repository is published and anonymously verified. No demo-video link is confirmed. No Devpost entry has been submitted by the agent.
 
 ## Confirmed event and current requirements
 
@@ -37,7 +37,7 @@ This combines a targeted scanner with manual review; it is not a guarantee again
 
 **MIT licence approved and applied.** The learner approved the proposed licence, including `Copyright (c) 2026 WorkCheck contributors`. See the root [LICENSE](../LICENSE). Third-party packages retain their own licences.
 
-**Publication explicitly authorized:** account `Deatheater10-creator`, public repository `WorkCheck`, audited code and included Git history. No remote or public repository has yet been confirmed. Authentication is being established using Git Credential Manager; never include credentials in files, chat, or remote URLs.
+**Publication explicitly authorized:** account `Deatheater10-creator`, public repository `WorkCheck`, audited code and included Git history. Public repository created under the verified authorized account and the audited history pushed normally to `master`. Authentication used Git Credential Manager; credentials were not printed or stored in project files or remote URLs.
 
 Fresh pre-publication audit: all eight reachable commits, 47 historical paths, 119 unique file versions and eight commit metadata objects checked. No configured secret-pattern findings or private paths were found. This adds complete per-commit path checks and metadata scanning to the earlier manual review. Evidence remains local in `.workcheck/final-history-audit.json`; repeat after the publication-preparation commit.
 
@@ -48,7 +48,7 @@ The authorized technical sequence is:
 3. Add its confirmed URL as origin and push the local `master` branch normally. Never force-push or paste access tokens into chat. Use the account's normal browser/credential-manager authentication.
 4. Check the URL without authentication. Verify README setup, dependency lock, app sources, tests, licence and the three planning documents are accessible. Record the verified URL in this file and spec.md.
 
-No placeholder remote commands were run and no repository was created.
+Publication verified without authentication on 21 October 2026: public visibility, MIT licence, README, pinned dependencies, application source, tests and scope/PRD/spec accessible. Remote commit matched local `b5808a650a4b6d9c17b5d321d54bd5247a149966`. The final pre-push audit checked nine commits, 48 historical paths, 123 unique file versions and nine metadata objects with no configured findings or private paths. Publication records are committed separately and checked again before pushing.
 
 ## Demo and submission materials
 
@@ -65,13 +65,13 @@ No placeholder remote commands were run and no repository was created.
 - [x] Existing tracked history and publication boundaries audited locally.
 - [x] Concrete demo plan and factual writing aids prepared.
 - [x] GitHub owner, proposed copyright-holder line, MIT licence and explicit public-publishing authorization.
-- [ ] Final audited public files committed and public repository URL verified anonymously.
+- [x] Final audited public files committed and public repository URL verified anonymously.
 - [ ] Learner records and uploads the demo; public video URL verified.
 - [ ] Learner provides the actual signed-in field prompts/limits and writes their answers, including Skill Pack usage.
 - [ ] Learner completes eligibility confirmations, personal reflections and exit survey.
 - [ ] Learner reviews the completed entry and explicitly authorizes submission or submits it themselves.
 
-Public repository URL: not yet available.
+Public repository URL: [https://github.com/Deatheater10-creator/WorkCheck](https://github.com/Deatheater10-creator/WorkCheck).
 
 Public video URL: not yet available.
 

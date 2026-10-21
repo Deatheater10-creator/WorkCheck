@@ -273,3 +273,10 @@ Fresh offline Edge run `scripts/offline_browser_check.py --ordinary` passed: `.w
 ## Stage 5 and parser refinements accepted
 
 The learner explicitly confirmed that ordinary maths notation passes review and their offline checks passed, and authorized committing Stage 5 with the reviewed parser changes. This adds learner-performed offline evidence to the prior agent-run scoped network-blocking checks; it does not claim the agent physically disconnected the device or tested a fresh Python installer on another computer. Latest guarded suite remains 177 tests passed in 202.379 seconds, with zero nonlocal connection attempts. The fresh offline browser ordinary-input/working/learning flow also passed. Only documentation/progress records changed after that verified code. Stage 5 is complete. Final readiness sign-off, code tour and app map remain pending before 6-ship. Photo recognition remains the approved typed-only fallback, and automatic practice grading remains deferred.
+
+
+## Public repository publication — 21 October 2026
+
+The learner explicitly approved MIT and public publication under Deatheater10-creator, including audited Git history. Root LICENSE applied. A fresh audit covered every reachable commit tree, 123 unique historical file versions and nine commit metadata objects: no configured credential-pattern findings, binary/large-file review flags or private paths. This supplements manual source/document review; no scanner guarantees every possible secret is absent. The learner profile, drafts, environments, skill directories and scratch evidence remain excluded.
+
+Published https://github.com/Deatheater10-creator/WorkCheck with a normal push, no history rewriting. Anonymous GitHub API checks confirmed public visibility, MIT detection, 48 source files, required planning/source/test/setup files and remote commit matching local b5808a650a4b6d9c17b5d321d54bd5247a149966. Publication-record updates are audited and pushed separately. No runtime changes were made; existing regression results stand. Video and Devpost submission remain pending.
