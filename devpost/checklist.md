@@ -61,7 +61,7 @@ Build mode: learn. Concise explanations before each hands-on check; wait for lea
 
 ## Hands-on Checkpoints
 
-Current status: All five build slices are complete. Learner approved the animations and authorized committing the final-review refinements. Fresh full guarded suite: 181 tests passed; fresh offline browser flow passed end to end. Final readiness report and code walkthrough/app map are being completed; explicit final readiness confirmation remains separate before 6-ship. Earlier entries below are the review history.
+Current status: All five build slices are complete. Learner approved the animations and authorized committing the final-review refinements, now recorded in 0726ff7. Fresh full guarded suite: 181 tests passed; fresh offline browser flow passed end to end. Final readiness report, beginner source walkthrough and offline app map are complete and checked. The learning wrap-up is an evidence-based recap/reference route linked to earlier learner hands-on checks, not a claim of a new guided exercise. Explicit final PoC readiness confirmation remains open before 6-ship. Earlier entries below are the review history.
 
 
 Stage 1 complete: 48 automated checks passed, revised appearance passed learner hands-on review, and commit 93ba8e4 records the checkpoint. Stage 2 is in progress. Details: devpost/validation.md.
@@ -86,17 +86,19 @@ Learn mode includes each slice's learner check. Fast mode pauses at these planne
 
 ## Code Tour and App Map
 
-- [ ] Learning activity complete — trace a check through interface, checker, and verifier
-- [ ] Optional edit and transfer reflection addressed — offered/declined/already covered/not applicable as appropriate
-- [ ] `devpost/app-map.html` generated from finished code, checked, and shown, including a project-grounded practice to reuse
+- [x] Learning wrap-up provided as an evidence-based recap of the previously reviewed product-rule flow, with a three-stop source explanation/reference route through input, checking/verification and teaching/display. No new learner-performed code exercise or mastery is claimed.
+- [x] Optional wording-only edit and transfer reflection offered in code-walkthrough.md; no edit or personal answer supplied. These are optional, not additional sign-off requirements.
+- [x] `devpost/app-map.html` generated from finished code, checked, and shown, including a project-grounded practice to reuse
 
-Activity and evidence: not yet performed.
-Route and stops: identify actual code locations after final revisions.
-Edit outcome: not yet offered.
-Reflection: not yet offered; personal responses belong in ignored profile.
-Activity mode: planned live app and editor.
+Activity and evidence: source-based walkthrough and evidence-based recap, grounded in earlier learner hands-on reviews and the fresh 181-test/full offline browser passes. Guide: devpost/code-walkthrough.md. Companion readiness report: devpost/readiness.md. App map checked with 42 valid local links/anchors, page scripts disabled, keyboard-operated details and no narrow-screen overflow; visually inspected desktop/mobile renders. Artifact: .workcheck/offline-d3fa36a6/map-report.json. Map snapshot source: 0726ff73b32da3f741d02a12169b174981f2ab17.
+Route and stops: ui.py::main (input/save/invalidation), differentiation.py::check_differentiation with verification.py::verify (decision/evidence), ui.py::show_result/show_learning with practice.py::verify_candidate (verified teaching/display). Reference route explained; fresh learner navigation is not claimed.
+Edit outcome: safe explanatory-sentence edit offered, none performed or retained.
+Reflection: optional transfer question offered in the walkthrough; no response recorded or invented. Personal responses belong in ignored profile.
+Activity mode: evidence-based recap and source walkthrough/reference, with agent-observed automated app execution. Final readiness confirmation is still open; 6-ship has not started.
 
 ## Revisions
+
+- Committed final-review application changes as 0726ff7. Completed readiness.md, the beginner code-walkthrough.md and a standalone offline app-map.html from that source snapshot. Verified all source/link anchors and real Edge rendering with scripts disabled, keyboard controls and narrow layout. The wrap-up is recorded honestly as a source-based explanation/recap of prior reviewed behaviour, not an unperformed learner exercise. Optional edit/reflection are offered without becoming a gate. No public remote or demo-video link is recorded; the current form, learner-written fields/survey and explicit final readiness confirmation remain before submission. No 6-ship activity or publication performed.
 
 - Final review commit authorized. Fresh guarded full suite passed 181 tests in 142.493 seconds, including worker startup isolation; fresh cold offline Edge flow passed both topics and all documented regression checkpoints. Corrected unnecessary UI import during Windows maths-worker startup without extending deadlines or changing checking rules, and repaired the browser harness's topic-menu interaction. Dependency/whitespace checks passed. Full evidence in validation.md. Continue the requested readiness report and source-based learning wrap-up; no publishing or submission performed.
 

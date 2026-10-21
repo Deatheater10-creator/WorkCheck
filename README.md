@@ -1,6 +1,8 @@
 # WorkCheck
 
-A local engineering-maths learning tool. **Stages 1-4:** differentiation and context-aware partial-fraction step checking, an editable numbered workspace, local draft saving/restoration, and confirmed reset. Verified working for the current question, concept explanations, a separate worked example and three targeted practice questions are available. Stage 4 passed learner hands-on review.
+A local engineering-maths learning tool. All five planned build stages are implemented: differentiation and context-aware partial-fraction step checking, an editable numbered workspace, local drafts and confirmed reset, verified teaching and three targeted practice questions, and documented offline setup. Worked solutions support progressive reveals and reduced-motion preferences.
+
+Project guides: [readiness and submission blockers](devpost/readiness.md), [beginner code walkthrough](devpost/code-walkthrough.md), and [offline app map](devpost/app-map.html). Open the HTML map locally in your browser. These are technical guides; the learner writes their own submission.
 
 ## Start on Windows
 
@@ -55,6 +57,10 @@ This execution-policy option applies only to that PowerShell process. The direct
 | Maths checking or practice times out | Your input stays intact. Try checking again with fewer applications running, or simplify the expression. A timeout is not a wrong-answer verdict. |
 
 ## Try differentiation
+
+Worked solutions start fully visible. Choose **Step by step** to restart with one mathematical transformation, **Next step** to continue, or **Show all** to restore the full solution immediately. The current solution, worked example and each revealed practice solution keep separate progress. Practice answers remain hidden until their own reveal switch is enabled. Editing the question or working clears old results and reveal progress; Cancel on New question preserves them.
+
+Reveals use a short fade, buttons give gentle visual feedback, and the first mistaken result line briefly highlights once per check. Equations do not slide or resize. All effects run locally and are disabled when your device requests reduced motion (on Windows 11, turn off **Settings > Accessibility > Visual effects > Animation effects**). Automatic practice grading remains deferred.
 
 Question: `x^2 sin(x)`
 
